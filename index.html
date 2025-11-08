@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конструктор Интерактивных Приложений</title>
+    
+    <style>
+        /* --- ОБЩАЯ СТРУКТУРА (без изменений) --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: grid;
+            grid-template-columns: 240px 1fr 300px;
+            grid-template-rows: 1fr auto;
+            gap: 12px;
+            height: 100vh;
+            margin: 0;
+            padding: 12px;
+            box-sizing: border-box;
+            background-color: #f0f2f5;
+        }
+        .panel {
+            border: 1px solid #d9d9d9; border-radius: 8px;
+            background-color: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 16px; overflow-y: auto; display: flex; flex-direction: column; 
+        }
+        h3 {
+            margin-top: 0; border-bottom: 1px solid #eee;
+            padding-bottom: 8px; color: #333;
+        }
+        h4 { margin-top: 16px; margin-bottom: 8px; color: #111; }
+
+        /* --- ЛЕВАЯ ПАНЕЛЬ (без изменений) --- */
+        #left-panel {
+            grid-row: 1 / 2; grid-column: 1 / 2; padding: 0; 
+            gap: 12px; overflow-y: hidden;
+        }
+        #palette, #screens { flex-shrink: 0; }
+        #screens { flex-grow: 1; overflow-y: auto; }
+        .tool {
+            padding: 10px 12px; margin-bottom: 8px; border: 1px solid #007bff;
+            background-color: #e6f2ff; color: #0056b3; border-radius: 6px;
+            cursor: move; font-weight: 500; text-align: center;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+        .tool:hover { background-color: #d0e7ff; box-shadow: 0 2px 4px rgba(0,123,255,0.2); }
+        #screen-list { list-style: none; padding: 0; margin: 0; }
+        .screen-item {
+            padding: 10px; border: 1px solid #ddd; border-radius: 6px;
+            margin-bottom: 5px; cursor: pointer; display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .screen-item:hover { background-color: #f9f9f9; }
+        .screen-item.active {
+            background-color: #e6f2ff; border-color: #007bff; font-weight: 600;
+        }
+        .screens-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            margin-bottom: 8px; 
+        }
+        
+        .screens-header h3 {
+            margin-top: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        
+        .quick-add-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 26px; 
+            padding: 0;
+            flex-shrink: 0;
+            transition: background-color 0.2s;
+        }
+        .quick-add-btn:hover {
+            background-color: #0056b3;
+        }
+        #add-screen-btn {
+            width: 100%; padding: 10px; border: none; border-radius: 6px;
+            background-color: #28a745; color: white; font-weight: 500;
+            cursor: pointer; margin-top: 10px;
+        }
+        #add-screen-btn:hover { background-color: #218838; }
+
+        /* --- ЦЕНТРАЛЬНАЯ ПАНЕЛЬ (ХОЛСТ) (без изменений) --- */
+        #canvas-wrapper {
+            grid-row: 1 / 2; grid-column: 2 / 3; border: 2px dashed #b0b0b0;
+            background-color: #ffffff; 
+            transition: border-color 0.2s, background-color 0.2s;
+            position: relative; 
+            overflow: hidden; padding: 0; 
+        }
+        #canvas-wrapper.drag-over { border-color: #007bff; background-color: #f0f8ff; }
+
+        .screen {
+            width: 100%; height: 100%; padding: 0; 
+            box-sizing: border-box; display: none; overflow: auto; 
+            background-color: #fafafa;
+            position: relative; 
+        }
+        .screen.active { display: block; }
+        
+        .screen > * {
+            position: absolute;
+            padding: 8px; 
+            cursor: grab; 
+            border: 2px solid transparent; transition: border-color 0.2s;
+            min-height: 20px; text-align: inherit; 
+            max-width: 100%; 
+            box-sizing: border-box; 
+            flex-shrink: 0;
+        }
+        .screen > .dragging {
+             cursor: grabbing; 
+             opacity: 0.6;
+             z-index: 10; 
+        }
+        
+        .screen img {
+            display: block;
+        }
+        .screen > .selected {
+            border: 2px solid #007bff;
+            box-shadow: 0 0 10px rgba(0,123,255,0.3);
+            z-index: 9; 
+        }
+
+        /* --- ПРАВАЯ ПАНЕЛЬ (Стили) (без изменений) --- */
+        #properties {
+            grid-row: 1 / 2; grid-column: 3 / 4; padding-top: 0; 
+        }
+        .props-tabs {
+            display: flex; border-bottom: 1px solid #d9d9d9;
+            margin: 0 -16px 16px -16px; padding: 0 16px;
+        }
+        .props-tabs button {
+            padding: 10px 16px; border: none; background: none;
+            cursor: pointer; font-size: 14px; font-weight: 500;
+            color: #555; border-bottom: 2px solid transparent;
+            margin-bottom: -1px; 
+        }
+        .props-tabs button.active { color: #007bff; border-bottom-color: #007bff; }
+        .props-tab-panel { display: none; }
+        .props-tab-panel.active { display: block; }
+        .prop-group {
+            margin-bottom: 16px; border: 1px solid #eee; padding: 10px; border-radius: 6px;
+        }
+        label {
+            display: block; margin-bottom: 6px; font-weight: 600;
+            color: #555; font-size: 14px;
+        }
+        input, textarea, select {
+            width: 100%; padding: 8px; border: 1px solid #ccc;
+            border-radius: 4px; box-sizing: border-box;
+            margin-top: 4px; 
+        }
+        #props-placeholder { color: #888; font-style: italic; }
+        #delete-btn {
+            background-color: #dc3545; color: white; border: none;
+            padding: 8px 12px; border-radius: 4px; cursor: pointer;
+            width: 100%; margin-top: 10px; font-weight: 500;
+        }
+        #delete-btn:hover { background-color: #c82333; }
+
+        /* --- СТИЛИ ДЛЯ ПАНЕЛИ ДЕЙСТВИЙ (без изменений) --- */
+        .action-block {
+            border: 1px solid #ddd;
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        .action-block label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+        .action-block select {
+            margin-bottom: 8px;
+        }
+        .delete-action-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 22px;
+            height: 22px;
+            border: none;
+            background: #f0f0f0;
+            color: #888;
+            border-radius: 50%;
+            cursor: pointer;
+            font-weight: bold;
+            line-height: 20px;
+            text-align: center;
+        }
+        .delete-action-btn:hover { background: #e0e0e0; color: #333; }
+        #add-action-btn {
+            width: 100%;
+            padding: 10px;
+            font-weight: 500;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        #add-action-btn:hover { background-color: #0056b3; }
+
+
+        /* --- ОБЛАСТЬ ЭКСПОРТА (без изменений) --- */
+        #export-area {
+            grid-row: 2 / 3; grid-column: 1 / -1; 
+            display: flex; flex-direction: column; gap: 8px; margin-top: 12px;
+        }
+        #exportBtn {
+            padding: 12px; font-size: 16px; font-weight: 600;
+            background-color: #007bff; color: white; border: none;
+            border-radius: 6px; cursor: pointer; transition: background-color 0.2s;
+        }
+        #exportBtn:hover { background-color: #0056b3; }
+        #exportOutput {
+            width: 100%; min-height: 150px; border: 1px solid #ccc;
+            border-radius: 6px; padding: 10px;
+            font-family: "Courier New", Courier, monospace; font-size: 14px;
+            box-sizing: border-box; resize: vertical;
+        }
+
+
+        /* --- СТИЛИ ДЛЯ МОДАЛЬНОГО ОКНА (без изменений) --- */
+        .modal-overlay {
+            display: none; 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 450px;
+        }
+        .modal-content h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .modal-content p {
+            font-size: 14px;
+            color: #555;
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+        .modal-content input[type="text"] {
+            margin-bottom: 16px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        
+        #modal-submit-btn,
+        #modal-close-btn {
+            width: 100%;
+            padding: 10px;
+            font-weight: 500;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        #modal-submit-btn {
+            background-color: #007bff; 
+            color: white;
+        }
+        #modal-submit-btn:hover {
+            background-color: #0056b3;
+        }
+        
+        #modal-close-btn {
+            background-color: #6c757d; 
+            color: white;
+        }
+        #modal-close-btn:hover {
+            background-color: #5a6268;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="left-panel" class="panel">
+        <div id="palette">
+            <h3>Инструменты</h3>
+            <div class="tool" draggable="true" data-type="h1">Заголовок H1</div>
+            <div class="tool" draggable="true" data-type="p">Параграф</div>
+            <div class="tool" draggable="true" data-type="img">Изображение</div>
+            <div class="tool" draggable="true" data-type="button">Кнопка</div>
+            <div class="tool" draggable="true" data-type="input">Поле ввода</div>
+            <div class="tool" draggable="true" data-type="div">Контейнер (Div)</div>
+        </div>
+        
+        <div id="screens">
+            <div class="screens-header">
+                <h3>Экраны</h3>
+                <button id="add-screen-btn-quick" class="quick-add-btn">+</button>
+            </div>
+            <ul id="screen-list"></ul>
+            <button id="add-screen-btn">+ Добавить экран</button>
+        </div>
+    </div>
+
+    <div id="canvas-wrapper">
+        </div>
+
+    <div id="properties" class="panel">
+        <div class="props-tabs" style="display: none;"> <button class="props-tab-btn active" data-tab="props-content">Стиль</button>
+            <button class="props-tab-btn" data-tab="props-actions">Действия</button>
+        </div>
+        <div id="props-content" class="props-tab-panel active">
+            </div>
+        <div id="props-actions" class="props-tab-panel">
+            </div>
+        <div id="props-placeholder" style="display: none;">
+            </div>
+    </div>
+
+    <div id="export-area">
+        <button id="exportBtn">Экспортировать Приложение (HTML)</button>
+        <textarea id="exportOutput" readonly placeholder="Здесь появится готовый HTML-код приложения..."></textarea>
+    </div>
+
+    <div id="template-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Загрузить шаблон</h3>
+            <p>Введите команду для загрузки шаблона:</p>
+            <input type="text" id="template-command-input" placeholder="... (пока для теста)">
+            
+            <div class="modal-buttons">
+                <button id="modal-submit-btn">Ввести</button>
+                <button id="modal-close-btn">Закрыть</button>
+            </div>
+        </div>
+    </div>
+    
+
+    <script>
+        // --- Глобальные переменные (без изменений) ---
+        const canvasWrapper = document.getElementById('canvas-wrapper');
+        const tools = document.querySelectorAll('.tool');
+        const propsTabsContainer = document.querySelector('.props-tabs');
+        const propsContent = document.getElementById('props-content');
+        const propsActions = document.getElementById('props-actions');
+        const propsPlaceholder = document.getElementById('props-placeholder');
+        const screenList = document.getElementById('screen-list');
+        const addScreenBtn = document.getElementById('add-screen-btn');
+        const addScreenBtnQuick = document.getElementById('add-screen-btn-quick'); 
+        const exportBtn = document.getElementById('exportBtn');
+        const exportOutput = document.getElementById('exportOutput');
+        
+        const templateModal = document.getElementById('template-modal');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        const modalSubmitBtn = document.getElementById('modal-submit-btn'); 
+        const templateCommandInput = document.getElementById('template-command-input'); 
+        
+        let selectedElements = []; 
+        let currentScreenId = null; 
+        let elementCounters = {}; 
+        
+        let isDragging = false;
+        let dragOffsets = new Map(); 
+
+        // --- ЛОГИКА УПРАВЛЕНИЯ ЭКРАНАМИ (без изменений) ---
+        function addNewScreen(defaultName = null) {
+            const screenName = prompt("Введите имя нового экрана:", defaultName || "Page-" + (screenList.children.length + 1));
+            if (!screenName) return; 
+            const screenId = 'screen-' + Date.now();
+            const newScreenDiv = document.createElement('div');
+            newScreenDiv.className = 'screen';
+            newScreenDiv.id = screenId;
+            newScreenDiv.dataset.screenName = screenName;
+            newScreenDiv.style.backgroundColor = '#fafafa';
+            canvasWrapper.style.backgroundColor = '#fafafa';
+
+            canvasWrapper.appendChild(newScreenDiv);
+            const newScreenLi = document.createElement('li');
+            newScreenLi.className = 'screen-item';
+            newScreenLi.dataset.screenId = screenId;
+            newScreenLi.textContent = screenName;
+            newScreenLi.addEventListener('click', () => { switchScreen(screenId); });
+            screenList.appendChild(newScreenLi);
+            switchScreen(screenId);
+        }
+        
+        function switchScreen(screenId) {
+            if (!screenId) return;
+            currentScreenId = screenId;
+            const activeScreen = document.getElementById(screenId);
+            if (activeScreen) {
+                canvasWrapper.style.backgroundColor = activeScreen.style.backgroundColor || '#fafafa';
+            }
+            canvasWrapper.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            screenList.querySelectorAll('.screen-item').forEach(li => li.classList.remove('active'));
+            screenList.querySelector(`.screen-item[data-screen-id="${screenId}"]`).classList.add('active');
+            clearSelectionAndShowScreenProps();
+        }
+        addScreenBtn.addEventListener('click', () => addNewScreen());
+        
+        // --- ЛОГИКА МОДАЛЬНОГО ОКНА (без изменений) ---
+        addScreenBtnQuick.addEventListener('click', () => {
+            templateModal.style.display = 'flex'; 
+        });
+        modalCloseBtn.addEventListener('click', () => {
+            templateModal.style.display = 'none'; 
+        });
+        modalSubmitBtn.addEventListener('click', () => {
+            const command = templateCommandInput.value.trim().toLowerCase();
+            if (command === 'import lib calculator') {
+                importCalculatorElements();
+                templateCommandInput.value = '';
+                templateModal.style.display = 'none';
+            } else {
+                alert("Неизвестная команда!");
+            }
+        });
+        templateModal.addEventListener('click', (e) => {
+            if (e.target.id === 'template-modal') {
+                templateModal.style.display = 'none';
+            }
+        });
+        
+        addNewScreen("Page-1");
+
+
+        // --- ЛОГИКА ПЕРЕТАСКИВАНИЯ (Drag & Drop) (без изменений) ---
+        
+        tools.forEach(tool => {
+            tool.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', e.target.dataset.type); 
+            });
+        });
+        canvasWrapper.addEventListener('dragover', (e) => { 
+            e.preventDefault(); 
+            e.dataTransfer.dropEffect = 'copy'; 
+            canvasWrapper.classList.add('drag-over'); 
+        });
+        canvasWrapper.addEventListener('dragleave', () => { 
+            canvasWrapper.classList.remove('drag-over'); 
+        });
+        
+        canvasWrapper.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); 
+            canvasWrapper.classList.remove('drag-over');
+            
+            const type = e.dataTransfer.getData('text/plain'); 
+            if (!type || !currentScreenId) return; 
+            
+            const activeScreen = document.getElementById(currentScreenId);
+            if (!activeScreen) return;
+
+            const newElement = createElement(type); 
+            if (newElement) {
+                const canvasRect = canvasWrapper.getBoundingClientRect();
+                const scrollTop = activeScreen.scrollTop;
+                const scrollLeft = activeScreen.scrollLeft;
+
+                let x = e.clientX - canvasRect.left + scrollLeft;
+                let y = e.clientY - canvasRect.top + scrollTop;
+
+                newElement.style.position = 'absolute';
+                newElement.style.left = `${x}px`;
+                newElement.style.top = `${y}px`;
+                
+                activeScreen.appendChild(newElement); 
+                
+                if (!elementCounters[type]) elementCounters[type] = 0;
+                elementCounters[type]++;
+                const typeName = getRussianTypeName(type);
+                newElement.dataset.elementName = `${typeName} ${elementCounters[type]}`;
+                
+                selectElement(newElement, e); 
+            }
+        });
+        
+        function getRussianTypeName(type) {
+            const names = { h1: 'Заголовок', p: 'Параграф', img: 'Картинка', button: 'Кнопка', input: 'Поле ввода', div: 'Контейнер' };
+            return names[type] || 'Элемент';
+        }
+        
+        function createElement(type) {
+            let el;
+            if (type === 'h1') { el = document.createElement('h1'); el.textContent = 'Новый заголовок'; }
+            else if (type === 'p') { el = document.createElement('p'); el.textContent = 'Новый параграф.'; }
+            else if (type === 'img') { 
+                el = document.createElement('img'); 
+                el.src = 'https://placehold.co/600x400/eee/ccc?text=Image'; 
+                el.alt = 'Placeholder';
+                el.style.display = 'block'; 
+            }
+            else if (type === 'button') { el = document.createElement('button'); el.textContent = 'Нажми меня'; }
+            else if (type === 'input') { 
+                el = document.createElement('input'); 
+                el.type = 'text'; 
+                el.placeholder = 'Введите текст...'; 
+                el.style.width = '160px'; 
+            }
+            else if (type === 'div') { 
+                el = document.createElement('div'); 
+                el.style.border = '1px dashed #999'; 
+                el.style.minHeight = '50px'; 
+                el.style.padding = '10px';
+                el.style.display = 'flex';
+                el.style.flexDirection = 'column';
+                el.style.width = '200px'; 
+            }
+            
+            if (el) { 
+                el.id = 'el-' + Date.now();
+                el.addEventListener('mousedown', (e) => onElementMouseDown(e, el));
+            }
+            return el;
+        }
+        
+        canvasWrapper.addEventListener('click', (e) => {
+            if (e.target.id === 'canvas-wrapper' || e.target.classList.contains('screen')) {
+                 clearSelectionAndShowScreenProps();
+            }
+        });
+
+
+        // --- ФУНКЦИЯ ИМПОРТА КАЛЬКУЛЯТОРА (без изменений) ---
+        function importCalculatorElements() {
+            const activeScreen = document.getElementById(currentScreenId);
+            if (!activeScreen) {
+                alert("Сначала выберите экран!");
+                return;
+            }
+
+            const groupID = 'calc-group-' + Date.now();
+            if (!elementCounters['calculator']) elementCounters['calculator'] = 0;
+            elementCounters['calculator']++;
+            const calcNum = elementCounters['calculator'];
+
+            // 1. Контейнер
+            const containerDiv = document.createElement('div');
+            containerDiv.id = 'el-' + Date.now() + '-container';
+            containerDiv.dataset.elementName = `Кальк ${calcNum} Контейнер`;
+            
+            containerDiv.addEventListener('mousedown', (e) => onElementMouseDown(e, containerDiv));
+            
+            containerDiv.style.position = 'absolute';
+            containerDiv.style.left = '20px';
+            containerDiv.style.top = '20px';
+            containerDiv.style.display = 'grid';
+            containerDiv.style.gridTemplateColumns = 'repeat(4, 1fr)';
+            containerDiv.style.gap = '10px';
+            containerDiv.style.width = '250px'; 
+            containerDiv.style.padding = '10px';
+            containerDiv.style.border = '1px solid #ccc'; 
+            containerDiv.style.backgroundColor = '#f0f0f0'; 
+            containerDiv.style.borderRadius = '8px';
+            containerDiv.style.boxSizing = 'border-box'; 
+
+            // 2. Дисплей
+            const calcDisplay = document.createElement('input');
+            calcDisplay.type = 'text';
+            calcDisplay.readOnly = true;
+            calcDisplay.id = 'el-' + Date.now() + '-display';
+            calcDisplay.dataset.elementName = `Кальк ${calcNum} Дисплей`;
+            calcDisplay.dataset.calcGroup = groupID;
+            calcDisplay.dataset.calcRole = 'display';
+            
+            calcDisplay.addEventListener('mousedown', (e) => onElementMouseDown(e, calcDisplay));
+
+            calcDisplay.style.position = 'relative'; 
+            calcDisplay.style.gridColumn = '1 / -1'; 
+            calcDisplay.style.width = '100%'; 
+            calcDisplay.style.boxSizing = 'border-box'; 
+            calcDisplay.style.padding = '10px';
+            calcDisplay.style.fontSize = '24px';
+            calcDisplay.style.textAlign = 'right';
+            calcDisplay.style.border = '1px solid #ddd';
+            calcDisplay.style.borderRadius = '4px';
+            calcDisplay.style.margin = '0'; 
+            calcDisplay.style.cursor = 'grab'; 
+
+            containerDiv.appendChild(calcDisplay);
+
+            // 3. Кнопки
+            const buttons = [
+                '7', '8', '9', '/', 
+                '4', '5', '6', '*',
+                '1', '2', '3', '-',
+                '0', '.', '=', '+',
+                'C'
+            ];
+
+            buttons.forEach(label => {
+                const btn = document.createElement('button');
+                btn.id = 'el-' + Date.now() + '-' + label;
+                btn.dataset.elementName = `Кальк ${calcNum} Кнопка ${label}`;
+                btn.dataset.calcGroup = groupID;
+                btn.dataset.calcRole = 'button';
+                btn.textContent = label;
+                
+                btn.addEventListener('mousedown', (e) => onElementMouseDown(e, btn));
+                
+                btn.style.position = 'relative'; 
+                btn.style.padding = '15px 0'; 
+                btn.style.fontSize = '18px';
+                btn.style.border = 'none';
+                btn.style.borderRadius = '6px';
+                btn.style.cursor = 'grab'; 
+                btn.style.backgroundColor = '#e0e0e0';
+                btn.style.color = '#333';
+                btn.style.margin = '0'; 
+                btn.style.textAlign = 'center'; 
+                
+                if (label === '=') {
+                    btn.style.gridColumn = 'span 2'; 
+                    btn.style.backgroundColor = '#007bff';
+                    btn.style.color = 'white';
+                }
+                else if (label === 'C') {
+                    btn.style.gridColumn = 'span 2'; 
+                    btn.style.backgroundColor = '#dc3545';
+                    btn.style.color = 'white';
+                }
+                else if ('/*-+'.includes(label)) {
+                    btn.style.backgroundColor = '#f0ad4e';
+                    btn.style.color = 'white';
+                }
+
+                containerDiv.appendChild(btn);
+            });
+            
+            activeScreen.appendChild(containerDiv);
+            selectElement(containerDiv, new MouseEvent('click')); 
+        }
+
+        // --- ЛОГИКА MOUSE DOWN/MOVE/UP (без изменений) ---
+        
+        function onElementMouseDown(e, element) {
+            e.stopPropagation();
+            
+            if ((e.target.tagName === 'INPUT' && !e.target.readOnly) || 
+                (e.target.tagName === 'TEXTAREA')) {
+                selectElement(element, e); 
+                return; 
+            }
+            
+            e.preventDefault(); 
+            
+            selectElement(element, e);
+            
+            isDragging = true;
+            dragOffsets.clear();
+
+            selectedElements.forEach(el => {
+                el.classList.add('dragging');
+                
+                dragOffsets.set(el, {
+                    x: e.clientX - parseFloat(el.style.left || 0),
+                    y: e.clientY - parseFloat(el.style.top || 0)
+                });
+            });
+
+            document.addEventListener('mousemove', onDocumentMouseMove);
+            document.addEventListener('mouseup', onDocumentMouseUp);
+        }
+
+        function onDocumentMouseMove(e) {
+            if (!isDragging) return;
+
+            selectedElements.forEach(el => {
+                const offset = dragOffsets.get(el);
+                if (!offset) return;
+
+                let newLeft = e.clientX - offset.x;
+                let newTop = e.clientY - offset.y;
+
+                el.style.left = `${newLeft}px`;
+                el.style.top = `${newTop}px`;
+            });
+            
+            updatePropertiesPanelFromState();
+        }
+
+        function onDocumentMouseUp(e) {
+            isDragging = false;
+            dragOffsets.clear();
+            selectedElements.forEach(el => el.classList.remove('dragging'));
+            
+            document.removeEventListener('mousemove', onDocumentMouseMove);
+            document.removeEventListener('mouseup', onDocumentMouseUp);
+            
+            updatePropertiesPanelFromState();
+        }
+
+        // --- ЛОГИКА ВЫДЕЛЕНИЯ И ПАНЕЛИ СВОЙСТВ (🚩 ИЗМЕНЕНИЕ) ---
+        
+        function deselectAllElements() {
+            selectedElements.forEach(el => el.classList.remove('selected'));
+            selectedElements = [];
+        }
+
+        function selectElement(element, e) {
+            if (!e.ctrlKey) {
+                if (!selectedElements.includes(element)) {
+                    deselectAllElements();
+                    selectedElements.push(element);
+                    element.classList.add('selected');
+                }
+            } else {
+                if (selectedElements.includes(element)) {
+                    element.classList.remove('selected');
+                    selectedElements = selectedElements.filter(el => el !== element);
+                } else {
+                    selectedElements.push(element);
+                    element.classList.add('selected');
+                }
+            }
+            showProperties();
+        }
+        
+        function clearSelectionAndShowScreenProps() {
+            deselectAllElements();
+            propsTabsContainer.style.display = 'none'; 
+            propsActions.innerHTML = ''; 
+            propsContent.innerHTML = '';
+            propsPlaceholder.style.display = 'none';
+            buildScreenProperties(); 
+        }
+        
+        // 🚩 ИСПРАВЛЕНИЕ ЗДЕСЬ
+        function showProperties() {
+            if (selectedElements.length === 0) {
+                clearSelectionAndShowScreenProps();
+            } else {
+                const lastSelected = selectedElements[selectedElements.length - 1];
+                
+                propsPlaceholder.style.display = 'none';
+                propsContent.innerHTML = ''; 
+                propsActions.innerHTML = ''; 
+                propsTabsContainer.style.display = 'flex'; 
+                
+                // 🚩 УДАЛЕНА СТРОКА, КОТОРАЯ СБРАСЫВАЛА ВКЛАДКУ
+                // propsTabsContainer.querySelector('[data-tab="props-content"]').click(); 
+                
+                buildPropertiesPanel(lastSelected); 
+                buildActionsPanel(lastSelected);
+            }
+        }
+        
+        function updatePropertiesPanelFromState() {
+            if (selectedElements.length !== 1) return; 
+            
+            const el = selectedElements[0];
+            const topInput = document.getElementById('prop-top--px-');
+            const leftInput = document.getElementById('prop-left--px-');
+            
+            if (topInput) topInput.value = parseFloat(el.style.top || 0).toFixed(0);
+            if (leftInput) leftInput.value = parseFloat(el.style.left || 0).toFixed(0);
+        }
+
+        function buildScreenProperties() {
+            const screen = document.getElementById(currentScreenId);
+            if (!screen) return;
+            propsContent.innerHTML = '';
+            const title = document.createElement('h3');
+            title.textContent = 'Настройки Экрана';
+            title.style.marginTop = 0;
+            propsContent.appendChild(title);
+            createPropertyInput('Цвет фона:', 'color', screen.style.backgroundColor || '#fafafa', (value) => { 
+                screen.style.backgroundColor = value; 
+                canvasWrapper.style.backgroundColor = value;
+            });
+        }
+        
+        function buildPropertiesPanel(element) {
+            createPropertyInput('Имя (для действий):', 'text', element.dataset.elementName || '', (value) => {
+                element.dataset.elementName = value;
+                buildActionsPanel(element);
+            });
+            
+            if (element.style.position !== 'relative') {
+                createPropertyInput('Top (px):', 'number', parseFloat(element.style.top || 0).toFixed(0), (value) => { 
+                    element.style.top = `${value}px`; 
+                });
+                createPropertyInput('Left (px):', 'number', parseFloat(element.style.left || 0).toFixed(0), (value) => { 
+                    element.style.left = `${value}px`; 
+                });
+            }
+            
+            if (['H1', 'P', 'BUTTON', 'DIV'].includes(element.tagName)) {
+                 createPropertyInput('Текст:', 'textarea', element.textContent, (value) => { element.textContent = value; });
+            }
+             if (element.tagName === 'INPUT') {
+                createPropertyInput('Заглушка (placeholder):', 'text', element.placeholder, (value) => { element.placeholder = value; });
+                createPropertyInput('Значение (value):', 'text', element.value, (value) => { element.value = value; });
+            }
+            if (element.tagName === 'IMG') {
+                createPropertyInput('URL Картинки:', 'text', element.src, (value) => { element.src = value; });
+                createPropertyInput('Alt текст:', 'text', element.alt, (value) => { element.alt = value; });
+            }
+             if (['H1', 'P', 'BUTTON', 'DIV'].includes(element.tagName)) {
+                createPropertySelect('Позиция (текста):', [
+                        { value: 'left', text: 'Слева' },
+                        { value: 'center', text: 'По центру' },
+                        { value: 'right', text: 'Справа' }
+                ], element.style.textAlign || 'left', (value) => { element.style.textAlign = value; });
+             }
+            
+            if (element.tagName === 'DIV') {
+                createPropertySelect('Отображение (Display):', [
+                        { value: 'block', text: 'Блок' },
+                        { value: 'flex', text: 'Flex' },
+                        { value: 'grid', text: 'Grid (Сетка)' } 
+                 ], element.style.display || 'block', (value) => { element.style.display = value; });
+                
+                if (element.style.display === 'flex' || element.style.display === 'grid') {
+                    if (element.style.display === 'flex') {
+                        createPropertySelect('Направление (Flex Direction):', [
+                                { value: 'column', text: 'Вертикально (Столбец)' },
+                                { value: 'row', text: 'Горизонтально (Ряд)' }
+                        ], element.style.flexDirection || 'column', (value) => { element.style.flexDirection = value; });
+                    }
+
+                    if (element.style.display === 'grid') {
+                         createPropertyInput('Колонки (Grid Columns):', 'text', element.style.gridTemplateColumns || '1fr 1fr', (value) => { element.style.gridTemplateColumns = value; });
+                         createPropertyInput('Отступ (Gap):', 'text', element.style.gap || '10px', (value) => { element.style.gap = value; });
+                    }
+
+                    createPropertySelect('Выравнивание (Осн. ось):', [
+                            { value: 'flex-start', text: 'Начало' },
+                            { value: 'center', text: 'Центр' },
+                            { value: 'flex-end', text: 'Конец' },
+                            { value: 'space-between', text: 'По краям' },
+                            { value: 'space-around', text: 'С отступами' }
+                    ], element.style.justifyContent || 'flex-start', (value) => { element.style.justifyContent = value; });
+                    createPropertySelect('Выравнивание (Попер. ось):', [
+                            { value: 'stretch', text: 'Растянуть' },
+                            { value: 'flex-start', text: 'Начало' },
+                            { value: 'center', text: 'Центр' },
+                            { value: 'flex-end', text: 'Конец' }
+                    ], element.style.alignItems || 'stretch', (value) => { element.style.alignItems = value; });
+                }
+                 createPropertyInput('Граница (border):', 'text', element.style.border || '1px dashed #999', (value) => { element.style.border = value; });
+            }
+                
+            createPropertyInput('Цвет текста:', 'color', element.style.color || '#000000', (value) => { element.style.color = value; });
+            createPropertyInput('Ширина (px, %):', 'text', element.style.width || '', (value) => { element.style.width = value; });
+            createPropertyInput('Высота (px, %):', 'text', element.style.height || '', (value) => { element.style.height = value; });
+            createPropertyInput('Мин. Высота (px, %):', 'text', element.style.minHeight || '', (value) => { element.style.minHeight = value; });
+            createPropertyInput('Цвет фона:', 'color', element.style.backgroundColor || '#ffffff', (value) => { element.style.backgroundColor = value; });
+            
+            const deleteButton = document.createElement('button');
+            deleteButton.id = 'delete-btn';
+            deleteButton.textContent = 'Удалить элемент(ы)'; 
+            
+            deleteButton.addEventListener('click', () => { 
+                selectedElements.forEach(el => el.remove()); 
+                clearSelectionAndShowScreenProps(); 
+            });
+            propsContent.appendChild(deleteButton);
+        }
+
+        function createPropertyInput(label, type, initialValue, onUpdate) {
+            const group = document.createElement('div'); group.className = 'prop-group';
+            const labelEl = document.createElement('label'); labelEl.textContent = label;
+            let inputEl;
+            if (type === 'textarea') { inputEl = document.createElement('textarea'); }
+            else { inputEl = document.createElement('input'); inputEl.type = type; }
+            
+            inputEl.id = 'prop-' + label.toLowerCase().replace(/[^a-z0-9]/g, '-');
+            
+            inputEl.value = initialValue;
+            const eventType = (type === 'color' || type === 'select-one' || type === 'number') ? 'change' : 'input';
+            inputEl.addEventListener(eventType, (e) => { onUpdate(e.target.value); });
+            
+            if (type === 'number' || type === 'text') {
+                 inputEl.addEventListener('input', (e) => { onUpdate(e.target.value); });
+            }
+            
+            group.appendChild(labelEl); group.appendChild(inputEl);
+            propsContent.appendChild(group);
+        }
+        function createPropertySelect(label, options, initialValue, onUpdate) {
+             const group = document.createElement('div'); group.className = 'prop-group';
+            const labelEl = document.createElement('label'); labelEl.textContent = label;
+            const selectEl = document.createElement('select');
+            selectEl.id = 'prop-' + label.toLowerCase().replace(/[^a-z0-9]/g, '-');
+            options.forEach(opt => {
+                const optionEl = document.createElement('option');
+                optionEl.value = opt.value; optionEl.textContent = opt.text;
+                if (opt.value === initialValue) optionEl.selected = true;
+                selectEl.appendChild(optionEl);
+            });
+            selectEl.addEventListener('change', (e) => { onUpdate(e.target.value); });
+            group.appendChild(labelEl); group.appendChild(selectEl);
+            propsContent.appendChild(group);
+        }
+
+
+        // === 4. ЛОГИКА ПАНЕЛИ ДЕЙСТВИЙ (без изменений) ===
+        function buildActionsPanel(element) {
+            propsActions.innerHTML = '';
+            const actions = getElementActions(element);
+            actions.forEach(actionData => {
+                const actionBlock = createActionBlock(element, actionData);
+                propsActions.appendChild(actionBlock);
+            });
+            const addBtn = document.createElement('button');
+            addBtn.id = 'add-action-btn';
+            addBtn.textContent = '+ Добавить действие';
+            addBtn.onclick = () => {
+                const defaultActionData = {
+                    event: 'click',
+                    action: 'show',
+                    targetId: ''
+                };
+                const newBlock = createActionBlock(element, defaultActionData);
+                propsActions.insertBefore(newBlock, addBtn);
+                saveElementActions(element);
+            };
+            propsActions.appendChild(addBtn);
+        }
+        function createActionBlock(element, actionData) {
+            const block = document.createElement('div');
+            block.className = 'action-block';
+            const eventLabel = document.createElement('label');
+            eventLabel.textContent = 'Когда:';
+            const eventSelect = document.createElement('select');
+            eventSelect.innerHTML = `
+                <option value="click">При клике</option>
+                <option value="mouseover">При наведении</option>
+                <option value="mouseout">При отведении мыши</option>
+            `;
+            eventSelect.value = actionData.event || 'click';
+            const actionLabel = document.createElement('label');
+            actionLabel.textContent = 'Сделать:';
+            const actionSelect = document.createElement('select');
+            actionSelect.innerHTML = `
+                <option value="show">Показать</option>
+                <option value="hide">Скрыть</option>
+                <option value="goto">Перейти на экран</option>
+            `;
+            actionSelect.value = actionData.action || 'show';
+            const targetLabel = document.createElement('label');
+            targetLabel.textContent = 'Цель:';
+            const targetSelect = document.createElement('select');
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-action-btn';
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.onclick = () => {
+                block.remove();
+                saveElementActions(element);
+            };
+            const updateTargetOptions = () => {
+                const currentAction = actionSelect.value;
+                targetSelect.innerHTML = ''; 
+                if (currentAction === 'goto') {
+                    screenList.querySelectorAll('.screen-item').forEach(li => {
+                        const opt = document.createElement('option');
+                        opt.value = li.dataset.screenId;
+                        opt.textContent = li.textContent;
+                        targetSelect.appendChild(opt);
+                    });
+                } else {
+                    const currentScreen = document.getElementById(currentScreenId);
+                    currentScreen.querySelectorAll('*[id^="el-"]').forEach(el => {
+                        const opt = document.createElement('option');
+                        opt.value = el.id;
+                        if (el.id === element.id) {
+                            opt.textContent = `(Этот элемент) ${el.dataset.elementName || el.id}`;
+                        } else {
+                            opt.textContent = el.dataset.elementName || el.id;
+                        }
+                        targetSelect.appendChild(opt);
+                    });
+                }
+                targetSelect.value = actionData.targetId;
+            };
+            actionSelect.onchange = () => {
+                actionData.action = actionSelect.value;
+                updateTargetOptions();
+                saveElementActions(element);
+            };
+            eventSelect.onchange = () => saveElementActions(element);
+            targetSelect.onchange = () => saveElementActions(element);
+            block.appendChild(deleteBtn);
+            block.appendChild(eventLabel);
+            block.appendChild(eventSelect);
+            block.appendChild(actionLabel);
+            block.appendChild(actionSelect);
+            block.appendChild(targetLabel);
+            block.appendChild(targetSelect);
+            updateTargetOptions();
+            return block;
+        }
+        function saveElementActions(element) {
+            const allBlocks = propsActions.querySelectorAll('.action-block');
+            const actionsArray = [];
+            allBlocks.forEach(block => {
+                const eventSelect = block.querySelectorAll('select')[0];
+                const actionSelect = block.querySelectorAll('select')[1];
+                const targetSelect = block.querySelectorAll('select')[2];
+                if (targetSelect.value) {
+                    actionsArray.push({
+                        event: eventSelect.value,
+                        action: actionSelect.value,
+                        targetId: targetSelect.value
+                    });
+                }
+            });
+            element.dataset.actions = JSON.stringify(actionsArray);
+        }
+        function getElementActions(element) {
+            if (element.dataset.actions) {
+                try {
+                    return JSON.parse(element.dataset.actions);
+                } catch (e) {
+                    console.error("Ошибка чтения действий:", e);
+                    return [];
+                }
+            }
+            return [];
+        }
+
+
+        // === 5. ЛОГИКА ЭКСПОРТА (без изменений) ===
+        exportBtn.addEventListener('click', () => {
+            clearSelectionAndShowScreenProps(); 
+            
+            const clone = canvasWrapper.cloneNode(true);
+            clone.querySelectorAll('*').forEach(el => {
+                el.classList.remove('selected');
+                if (el.dataset && el.dataset.elementName) {
+                     delete el.dataset.elementName;
+                }
+            });
+            const firstScreen = clone.querySelector('.screen');
+            if(firstScreen) {
+                firstScreen.classList.add('active');
+            }
+            
+            const bodyContent = clone.innerHTML;
+            
+            const runtimeScript = `
+<script>
+    // 1. Функции-действия (No-Code)
+    function runtimeShow(elementId) {
+        const el = document.getElementById(elementId);
+        if (el) { el.style.display = ''; }
+    }
+    function runtimeHide(elementId) {
+        const el = document.getElementById(elementId);
+        if (el) { el.style.display = 'none'; }
+    }
+    function runtimeGoto(screenId) {
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.style.display = 'none';
+        });
+        const screen = document.getElementById(screenId);
+        if (screen) {
+            screen.style.display = screen.dataset.originalDisplay || 'block';
+        }
+    }
+
+    // 2. Функция "Привязки" событий (No-Code)
+    function attachEventListeners() {
+        document.querySelectorAll('[data-actions]').forEach(element => {
+            try {
+                const actions = JSON.parse(element.dataset.actions);
+                actions.forEach(action => {
+                    element.addEventListener(action.event, (e) => {
+                        e.stopPropagation(); 
+                        switch (action.action) {
+                            case 'show': runtimeShow(action.targetId); break;
+                            case 'hide': runtimeHide(action.targetId); break;
+                            case 'goto': runtimeGoto(action.targetId); break;
+                        }
+                    });
+                });
+            } catch (e) {
+                console.error('Ошибка привязки действий:', e, element);
+            }
+        });
+    }
+
+    // 3. Логика Калькулятора (на основе ГРУПП)
+    function runtimeCalculator() {
+        const groupIDs = new Set();
+        document.querySelectorAll('[data-calc-group]').forEach(el => {
+            groupIDs.add(el.dataset.calcGroup);
+        });
+
+        groupIDs.forEach(groupID => {
+            const display = document.querySelector(\`[data-calc-group="\${groupID}"][data-calc-role="display"]\`);
+            const buttons = document.querySelectorAll(\`[data-calc-group="\${groupID}"][data-calc-role="button"]\`);
+            
+            if (!display || buttons.length === 0) {
+                console.error(\`Элементы калькулятора для группы \${groupID} не найдены.\`);
+                return; 
+            }
+
+            let currentInput = '';
+            let operator = '';
+            let previousInput = '';
+
+            buttons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    
+                    const value = button.textContent; 
+
+                    if (!isNaN(parseFloat(value)) || value === '.') { 
+                        if (value === '.' && currentInput.includes('.')) return; 
+                        currentInput += value;
+                        display.value = currentInput;
+                    
+                    } else if (value.toLowerCase() === 'c' || value.toLowerCase() === 'с') { 
+                        currentInput = '';
+                        previousInput = '';
+                        operator = '';
+                        display.value = '';
+                    
+                    } else if (value === '=') { 
+                        if (currentInput && previousInput && operator) {
+                            try {
+                                currentInput = String(eval(previousInput + operator + currentInput));
+                                display.value = currentInput;
+                            } catch (e) {
+                                display.value = 'Error';
+                                currentInput = '';
+                            }
+                            previousInput = '';
+                            operator = '';
+                        }
+                    
+                    } else { 
+                        if (currentInput) {
+                            if (previousInput && operator) { 
+                                try {
+                                    previousInput = String(eval(previousInput + operator + currentInput));
+                                } catch (e) {
+                                    display.value = 'Error';
+                                    previousInput = '';
+                                    currentInput = '';
+                                    operator = '';
+                                    return;
+                                }
+                            } else {
+                                previousInput = currentInput;
+                            }
+                            operator = value;
+                            currentInput = '';
+                            display.value = previousInput; 
+                        } else if (previousInput) {
+                            operator = value; 
+                        }
+                    }
+                });
+            });
+        });
+    }
+
+    // 4. Запуск при загрузке
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.dataset.originalDisplay = getComputedStyle(screen).display || 'block';
+        });
+        const firstScreen = document.querySelector('.screen.active');
+        if (firstScreen) {
+            runtimeGoto(firstScreen.id);
+        }
+        
+        attachEventListeners(); 
+        runtimeCalculator();  
+    });
+<\/script>
+            `;
+            
+            const runtimeStyle = `
+<style>
+    body { font-family: sans-serif; margin: 0; }
+    .screen { 
+        width: 100%; min-height: 100vh; 
+        box-sizing: border-box; 
+        position: relative; 
+    }
+    .screen > * { 
+        position: absolute; 
+        max-width: 100%; box-sizing: border-box; 
+        flex-shrink: 0;
+    }
+    .screen img {
+        display: block;
+    }
+    
+    button { padding: 10px 15px; font-size: 16px; cursor: pointer; }
+    img { max-width: 100%; height: auto; }
+    input { padding: 8px; font-size: 16px; }
+</style>
+            `;
+
+            const finalHtml = `
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мое Приложение</title>
+    ${runtimeStyle}
+</head>
+<body>
+    ${bodyContent}
+    ${runtimeScript}
+</body>
+</html>
+            `;
+            
+            exportOutput.value = finalHtml;
+        });
+
+    </script>
+</body>
+</html>
