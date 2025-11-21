@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CYBER SECURITY HUB v19.0</title>
+    <title>CYBER SECURITY HUB v20.0</title>
     <!-- Библиотеки -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
@@ -57,12 +57,12 @@
         .auth-btn:hover { background: #00ff00; color: #000; }
 
         /* --- ДАШБОРД --- */
-        .dashboard-container { text-align: center; animation: fadeIn 0.5s; max-width: 900px; }
-        .hub-title { font-size: 2em; margin-bottom: 40px; text-shadow: 0 0 10px #00ff00; letter-spacing: 3px; text-transform: uppercase; }
-        .hub-grid { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        .dashboard-container { text-align: center; animation: fadeIn 0.5s; max-width: 1000px; }
+        .hub-title { font-size: 2em; margin-bottom: 30px; text-shadow: 0 0 10px #00ff00; letter-spacing: 3px; text-transform: uppercase; }
+        .hub-grid { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
         
         .hub-card {
-            width: 160px; height: 160px;
+            width: 150px; height: 140px;
             border: 2px solid #333; background: #111;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             cursor: pointer; transition: 0.3s; border-radius: 10px; position: relative;
@@ -71,15 +71,15 @@
         
         .hub-card.locked { opacity: 0.4; filter: grayscale(100%); border-color: #555; cursor: not-allowed; }
         .hub-card.locked:hover { transform: none; box-shadow: none; border-color: #555; }
-        .lock-icon { position: absolute; top: 10px; right: 10px; font-size: 1.2em; color: #fff; display: none; }
+        .lock-icon { position: absolute; top: 5px; right: 5px; font-size: 1em; color: #fff; display: none; }
         .hub-card.locked .lock-icon { display: block; }
 
         .hub-card.soon { opacity: 0.5; border-color: #444; cursor: default; }
         .hub-card.soon:hover { transform: none; box-shadow: none; border-color: #444; }
-        .soon-text { color: #ff0000; font-size: 0.8em; margin-top: 5px; font-weight: bold; letter-spacing: 1px; text-shadow: 0 0 5px red; }
+        .soon-text { color: #ff0000; font-size: 0.7em; margin-top: 5px; font-weight: bold; letter-spacing: 1px; text-shadow: 0 0 5px red; }
 
-        .card-icon { font-size: 3em; margin-bottom: 10px; }
-        .card-title { font-weight: bold; font-size: 0.8em; text-align: center; text-transform: uppercase; }
+        .card-icon { font-size: 2.5em; margin-bottom: 10px; }
+        .card-title { font-weight: bold; font-size: 0.75em; text-align: center; text-transform: uppercase; }
         .user-welcome { position: absolute; top: 20px; right: 20px; color: #666; font-size: 0.8em; }
 
         /* --- МОДУЛИ (UI) --- */
@@ -89,6 +89,12 @@
             width: 90%; max-width: 900px; position: relative; z-index: 1; animation: fadeIn 0.3s;
         }
 
+        /* FOOTPRINT UI */
+        .fp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; margin-top: 15px; }
+        .fp-item { border-bottom: 1px dashed #333; padding: 5px; }
+        .fp-label { color: #888; font-size: 0.9em; }
+        .fp-value { color: #00ff00; font-weight: bold; display: block; }
+        
         /* EDITOR UI */
         .editor-controls { 
             display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; 
@@ -96,9 +102,8 @@
         }
         .editor-group { display: flex; gap: 5px; align-items: center; }
         .editor-label { font-size: 0.8em; color: #888; }
-        
         .editor-textarea {
-            width: 100%; height: 450px; background: #000; color: #0f0;
+            width: 100%; height: 400px; background: #000; color: #0f0;
             border: 1px solid #333; padding: 15px; font-family: 'Consolas', monospace;
             font-size: 16px; resize: none; outline: none; box-sizing: border-box;
             background-size: cover; background-position: center; background-repeat: no-repeat;
@@ -182,7 +187,7 @@
         <div class="user-welcome">ПОЛЬЗОВАТЕЛЬ: <span id="user-display">...</span> | <span onclick="doLogout()" style="cursor:pointer; text-decoration:underline;">ВЫХОД</span></div>
         
         <div class="dashboard-container">
-            <div class="hub-title">ГЛАВНОЕ МЕНЮ v19.0</div>
+            <div class="hub-title">ГЛАВНОЕ МЕНЮ v20.0</div>
             <div class="hub-grid">
                 <!-- VIRUS -->
                 <div class="hub-card" id="card-virus" onclick="openTool('virus')">
@@ -192,13 +197,13 @@
                 </div>
                 
                 <!-- MAKER (SOON) -->
-                <div class="hub-card soon">
+                <div class="hub-card soon" id="card-maker">
                     <div class="card-icon" style="filter:grayscale(100%); color:#555;">🛠️</div>
                     <div class="card-title" style="color:#666;">КОНСТРУКТОР</div>
                     <div class="soon-text">СКОРО...</div>
                 </div>
 
-                <!-- EDITOR (NEW) -->
+                <!-- EDITOR -->
                 <div class="hub-card" id="card-editor" onclick="openTool('editor')">
                     <div class="lock-icon">🔒</div>
                     <div class="card-icon">📝</div>
@@ -217,6 +222,12 @@
                     <div class="card-icon">👁️</div>
                     <div class="card-title">OSINT СКАНЕР</div>
                 </div>
+                <!-- FOOTPRINT (NEW) -->
+                <div class="hub-card" id="card-footprint" onclick="openTool('footprint')">
+                    <div class="lock-icon">🔒</div>
+                    <div class="card-icon">👣</div>
+                    <div class="card-title">ЦИФРОВОЙ СЛЕД</div>
+                </div>
                 <!-- PASS -->
                 <div class="hub-card" id="card-pass" onclick="openTool('pass')">
                     <div class="lock-icon">🔒</div>
@@ -234,6 +245,12 @@
                     <div class="lock-icon">🔒</div>
                     <div class="card-icon">🔓</div>
                     <div class="card-title">КРИПТО СТАНЦИЯ</div>
+                </div>
+                <!-- STEGANOGRAPHY (NEW) -->
+                <div class="hub-card" id="card-stego" onclick="openTool('stego')">
+                    <div class="lock-icon">🔒</div>
+                    <div class="card-icon">🖼️</div>
+                    <div class="card-title">СТЕГАНОГРАФИЯ</div>
                 </div>
             </div>
         </div>
@@ -268,7 +285,7 @@
     <!-- 4. SCRIPT MAKER (HIDDEN) -->
     <div id="maker-tool" class="screen"></div>
 
-    <!-- 5. SECURE EDITOR (PRO UPDATE) -->
+    <!-- 5. SECURE EDITOR -->
     <div id="editor-tool" class="screen">
         <button class="back-btn-abs" onclick="showDashboard()">« МЕНЮ</button>
         <div class="module-container" style="max-width:1000px;">
@@ -362,7 +379,22 @@
         </div>
     </div>
 
-    <!-- 8. PASSWORD AUDITOR -->
+    <!-- 8. DIGITAL FOOTPRINT (NEW) -->
+    <div id="footprint-tool" class="screen">
+        <button class="back-btn-abs" onclick="showDashboard()">« МЕНЮ</button>
+        <div class="module-container">
+            <h1 style="text-align:center;">👣 ЦИФРОВОЙ СЛЕД</h1>
+            <p style="text-align:center; color:#aaa; margin-bottom:20px;">Что сайты знают о вас просто так:</p>
+            <div class="fp-grid" id="fp-data">
+                <!-- Данные заполнятся JS -->
+            </div>
+            <div style="text-align:center; margin-top:20px;">
+                <button onclick="loadFootprint()" style="background:#004400; color:#fff; border:1px solid #00ff00; padding:10px 20px; cursor:pointer;">ОБНОВИТЬ ДАННЫЕ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 9. PASSWORD AUDITOR -->
     <div id="pass-tool" class="screen">
         <button class="back-btn-abs" onclick="showDashboard()">« МЕНЮ</button>
         <div class="module-container">
@@ -376,7 +408,7 @@
         </div>
     </div>
 
-    <!-- 9. EXIF SPY -->
+    <!-- 10. EXIF SPY -->
     <div id="exif-tool" class="screen">
         <button class="back-btn-abs" onclick="showDashboard()">« МЕНЮ</button>
         <div class="module-container">
@@ -388,7 +420,7 @@
         </div>
     </div>
 
-    <!-- 10. CRYPTO STATION -->
+    <!-- 11. CRYPTO STATION -->
     <div id="crypto-tool" class="screen">
         <button class="back-btn-abs" onclick="showDashboard()">« МЕНЮ</button>
         <div class="module-container">
@@ -399,13 +431,44 @@
                     <option value="binary">Бинарный (01)</option>
                     <option value="hex">HEX (16-ричный)</option>
                     <option value="caesar">Цезарь (+3)</option>
-                    <option value="reverse">Реверс (Задом наперед)</option>
+                    <option value="reverse">Реверс</option>
                 </select>
                 <button onclick="doCrypto('enc')" style="flex-grow:1; cursor:pointer;">ЗАШИФРОВАТЬ</button>
                 <button onclick="doCrypto('dec')" style="flex-grow:1; cursor:pointer; border-color:orange; color:orange;">РАСШИФРОВАТЬ</button>
             </div>
             <textarea id="cryptoInput" placeholder="Введите текст..." style="width:100%; height:100px; background:#000; border:1px solid #333; color:#00ff00; padding:10px; box-sizing:border-box; margin-bottom:10px;"></textarea>
             <div id="crypto-result" class="result-box" style="min-height:50px;">Результат...</div>
+        </div>
+    </div>
+
+    <!-- 12. STEGANOGRAPHY (NEW) -->
+    <div id="stego-tool" class="screen">
+        <button class="back-btn-abs" onclick="showDashboard()">« МЕНЮ</button>
+        <div class="module-container">
+            <h1 style="text-align:center;">🖼️ СТЕГАНОГРАФИЯ (LSB)</h1>
+            <p style="text-align:center; color:#888; font-size:0.9em; margin-bottom:20px;">Спрячьте текст внутри пикселей картинки (только PNG).</p>
+            
+            <div style="display:flex; gap:20px; flex-wrap:wrap; justify-content:center;">
+                <!-- Левая часть: Картинка -->
+                <div style="flex:1; min-width:300px; text-align:center;">
+                    <input type="file" id="stegoInput" accept="image/*" style="margin-bottom:10px;">
+                    <div style="width:100%; height:200px; border:1px dashed #333; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                        <img id="stegoPreview" style="max-width:100%; max-height:100%; display:none;">
+                        <span id="stegoPlaceholder" style="color:#444;">Нет изображения</span>
+                    </div>
+                    <canvas id="stegoCanvas" style="display:none;"></canvas>
+                </div>
+
+                <!-- Правая часть: Текст -->
+                <div style="flex:1; min-width:300px; display:flex; flex-direction:column; gap:10px;">
+                    <textarea id="stegoText" placeholder="Введите секретное сообщение..." style="flex:1; min-height:150px; background:#000; border:1px solid #333; color:#0f0; padding:10px; resize:none;"></textarea>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="stegoEncode()" style="flex:1; background:#004400; border:1px solid #0f0; color:#fff; cursor:pointer; padding:10px;">СПРЯТАТЬ И СКАЧАТЬ</button>
+                        <button onclick="stegoDecode()" style="flex:1; background:#333; border:1px solid orange; color:orange; cursor:pointer; padding:10px;">ПРОЧИТАТЬ</button>
+                    </div>
+                </div>
+            </div>
+            <div id="stegoStatus" style="margin-top:10px; text-align:center; color:#ccc;"></div>
         </div>
     </div>
 
@@ -444,22 +507,48 @@
         const db = getDatabase(app);
 
         let fileRawData = null, fileName = "", fileLines = [], currentUserSub = 'default';
-        let bgImageBase64 = ""; // Для сохранения фона в HTML
+        let bgImageBase64 = "";
 
         // --- UI ---
         window.showScreen = (id) => {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
+        
         window.openTool = (tool) => {
-            const perms = { 'virus':['default','Auto','Full'], 'rick':['default','Auto','Full'], 'pass':['default','Auto','Full'], 'maker':['Auto','Full'], 'editor':['Auto','Full'], 'osint':['Auto','Full'], 'exif':['Full'], 'crypto':['Full'] };
-            if (tool !== 'maker' && !perms[tool].includes(currentUserSub)) { alert("ДОСТУП ЗАПРЕЩЕН! Требуется повышение уровня подписки."); return; }
+            // PERMISSIONS
+            const perms = {
+                'virus': ['default', 'Auto', 'Full'],
+                'rick': ['default', 'Auto', 'Full'],
+                'pass': ['default', 'Auto', 'Full'],
+                'maker': ['Auto', 'Full'],
+                'editor': ['default', 'Auto', 'Full'],
+                'osint': ['Auto', 'Full'],
+                'footprint': ['Auto', 'Full'],
+                'exif': ['Full'],
+                'crypto': ['Full'],
+                'stego': ['Full']
+            };
+
+            if (tool !== 'maker' && !perms[tool].includes(currentUserSub)) {
+                alert("ДОСТУП ЗАПРЕЩЕН! Требуется повышение уровня подписки.");
+                return;
+            }
             if(tool === 'maker') return;
+
             const loader = document.getElementById('loading-overlay');
             const msg = document.getElementById('loading-msg');
-            const msgs = { virus:"ЗАГРУЗКА АНТИВИРУСА...", rick:"ЗАГРУЗКА АНТИ-ТРОЛЛА...", maker:"ЗАГРУЗКА КОНСТРУКТОРА...", osint:"ЗАГРУЗКА OSINT...", pass:"ЗАГРУЗКА АУДИТА...", exif:"ЗАГРУЗКА EXIF...", crypto:"ЗАГРУЗКА КРИПТО...", editor:"ЗАГРУЗКА РЕДАКТОРА..." };
+            const msgs = { 
+                virus: "ЗАГРУЗКА АНТИВИРУСА...", rick: "ЗАГРУЗКА АНТИ-ТРОЛЛА...", maker: "ЗАГРУЗКА КОНСТРУКТОРА...",
+                osint: "ЗАГРУЗКА OSINT...", pass: "ЗАГРУЗКА АУДИТА...", exif: "ЗАГРУЗКА EXIF...", crypto: "ЗАГРУЗКА КРИПТО...", 
+                editor: "ЗАГРУЗКА РЕДАКТОРА...", footprint: "АНАЛИЗ ОТПЕЧАТКА...", stego: "ЗАГРУЗКА СТЕГАНОГРАФИИ..."
+            };
             msg.innerText = msgs[tool] || "ЗАГРУЗКА...";
+            
             loader.style.display = 'flex'; void loader.offsetWidth; loader.style.opacity = '1';
+            
+            if(tool === 'footprint') loadFootprint(); // Preload data
+
             setTimeout(() => {
                 if(tool === 'virus') window.showScreen('virus-tool');
                 if(tool === 'rick') window.showScreen('rick-tool');
@@ -468,6 +557,9 @@
                 if(tool === 'pass') window.showScreen('pass-tool');
                 if(tool === 'exif') window.showScreen('exif-tool');
                 if(tool === 'crypto') window.showScreen('crypto-tool');
+                if(tool === 'footprint') window.showScreen('footprint-tool');
+                if(tool === 'stego') window.showScreen('stego-tool');
+                
                 loader.style.opacity = '0';
                 setTimeout(() => { loader.style.display = 'none'; }, 500);
             }, 2500);
@@ -476,7 +568,7 @@
         window.toggleFeed = () => document.getElementById('feedPanel').classList.toggle('open');
         window.doLogout = () => signOut(auth);
 
-        // --- AUTH ---
+        // --- AUTH & FEED ---
         onAuthStateChanged(auth, (user) => {
             if(user) {
                 window.showScreen('dashboard-screen');
@@ -484,11 +576,14 @@
                 onValue(ref(db, 'Users/'+user.uid), (s) => {
                     const sub = (s.val() && s.val().Subscribe) ? s.val().Subscribe : 'default';
                     currentUserSub = sub;
+                    
                     const oA = document.querySelector('option[value="auto"]'), oF = document.querySelector('option[value="full"]');
                     oA.disabled=true; oA.innerText="Авто [ЗАКРЫТО]"; oF.disabled=true; oF.innerText="Полное [ЗАКРЫТО]";
                     if(sub==='Auto'||sub==='Full') { oA.disabled=false; oA.innerText="Авто"; }
                     if(sub==='Full') { oF.disabled=false; oF.innerText="Полное"; }
-                    updateVirusAccess(sub); updateHubLocks(sub);
+                    
+                    updateVirusAccess(sub);
+                    updateHubLocks(sub);
                 });
                 listenFeed();
                 if(localStorage.getItem('secure_pad')) document.getElementById('securePad').value = localStorage.getItem('secure_pad');
@@ -496,28 +591,39 @@
         });
         
         function updateHubLocks(sub) {
-            const cards = { 'virus':'card-virus', 'rick':'card-rick', 'pass':'card-pass', 'maker':'card-maker', 'editor':'card-editor', 'osint':'card-osint', 'exif':'card-exif', 'crypto':'card-crypto' };
+            const cards = { 'virus':'card-virus', 'rick':'card-rick', 'pass':'card-pass', 'maker':'card-maker', 'editor':'card-editor', 'osint':'card-osint', 'exif':'card-exif', 'crypto':'card-crypto', 'footprint':'card-footprint', 'stego':'card-stego' };
             for (let k in cards) if(document.getElementById(cards[k])) document.getElementById(cards[k]).classList.remove('locked');
-            if (sub === 'default') { ['editor', 'osint', 'exif', 'crypto'].forEach(k => document.getElementById(cards[k]).classList.add('locked')); } 
-            else if (sub === 'Auto') { ['exif', 'crypto'].forEach(k => document.getElementById(cards[k]).classList.add('locked')); }
+            
+            if (sub === 'default') {
+                ['osint', 'footprint', 'exif', 'crypto', 'stego'].forEach(k => document.getElementById(cards[k]).classList.add('locked'));
+            } else if (sub === 'Auto') {
+                ['exif', 'crypto', 'stego'].forEach(k => document.getElementById(cards[k]).classList.add('locked'));
+            }
+            // Maker is always locked (soon)
+            document.getElementById(cards['maker']).classList.add('soon');
         }
-        
+
         function updateVirusAccess(sub) {
-            const select = document.getElementById('targetType'); const opts = select.options;
-            const allowedDefault = ['bat']; const allowedAuto = ['bat', 'py', 'vbs', 'ps1'];
+            const select = document.getElementById('targetType');
+            const opts = select.options;
+            const allowedDefault = ['bat'];
+            const allowedAuto = ['bat', 'py', 'vbs', 'ps1'];
             for(let i=0; i<opts.length; i++) {
-                let val = opts[i].value; let label = opts[i].text.replace(/ \[LOCK\]/g, '');
+                let val = opts[i].value;
+                let label = opts[i].text.replace(/ \[LOCK\]/g, '');
                 let disabled = true;
                 if(sub === 'Full') disabled = false;
                 else if(sub === 'Auto' && allowedAuto.includes(val)) disabled = false;
                 else if(sub === 'default' && allowedDefault.includes(val)) disabled = false;
-                opts[i].disabled = disabled; opts[i].text = label + (disabled ? " [LOCK]" : "");
+                opts[i].disabled = disabled;
+                opts[i].text = label + (disabled ? " [LOCK]" : "");
             }
             if(select.selectedOptions[0].disabled) select.value = 'bat';
         }
 
         document.getElementById('btnLogin').onclick = () => signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value).catch(e=>alert("Ошибка входа"));
         document.getElementById('btnRegister').onclick = () => createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value).then(c=>set(ref(db,'Users/'+c.user.uid),{email:c.user.email,Subscribe:"default"})).catch(e=>alert(e.message));
+
         function listenFeed() {
             onValue(ref(db, 'scans'), (s) => {
                 const f = document.getElementById('feed'); f.innerHTML=""; const d=s.val(); if(!d)return;
@@ -529,71 +635,169 @@
             });
         }
 
-        // --- EDITOR LOGIC (UPDATED) ---
+        // --- EDITOR LOGIC ---
         document.getElementById('securePad').addEventListener('input', (e) => localStorage.setItem('secure_pad', e.target.value));
-        
-        window.applyPresetColor = () => {
-            const color = document.getElementById('edColorPreset').value;
-            document.getElementById('securePad').style.color = color;
-        }
-        
-        window.applyCustomColor = () => {
-            const color = document.getElementById('edCustomColor').value;
-            document.getElementById('securePad').style.color = color;
-        }
-
+        window.applyPresetColor = () => { document.getElementById('securePad').style.color = document.getElementById('edColorPreset').value; }
+        window.applyCustomColor = () => { document.getElementById('securePad').style.color = document.getElementById('edCustomColor').value; }
         window.updateEditorStyle = () => {
             const pad = document.getElementById('securePad');
             pad.style.fontFamily = document.getElementById('edFont').value;
             pad.style.fontSize = document.getElementById('edSize').value + 'px';
             pad.style.backgroundColor = document.getElementById('edBgColor').value;
         }
-        
         window.uploadBgImage = () => {
             const file = document.getElementById('edBgImageInput').files[0];
-            if(file){
+            if(file){ const r = new FileReader(); r.onload = (e) => { bgImageBase64 = e.target.result; document.getElementById('securePad').style.backgroundImage = `url(${bgImageBase64})`; }; r.readAsDataURL(file); }
+        }
+        window.clearBgImage = () => { bgImageBase64 = ""; document.getElementById('securePad').style.backgroundImage = "none"; document.getElementById('edBgImageInput').value = ""; }
+        window.toggleGlow = () => document.getElementById('securePad').classList.toggle('glow-text');
+        window.downloadTxt = () => { const blob = new Blob([document.getElementById('securePad').value], {type: "text/plain;charset=utf-8"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "secure_note.txt"; a.click(); }
+        window.downloadHtml = () => {
+            const text = document.getElementById('securePad').value; const color = document.getElementById('securePad').style.color || '#00ff00'; const bgColor = document.getElementById('securePad').style.backgroundColor || '#000000'; const font = document.getElementById('edFont').value; const size = document.getElementById('edSize').value; const isGlow = document.getElementById('securePad').classList.contains('glow-text'); const glowStyle = isGlow ? "text-shadow: 0 0 5px currentColor;" : ""; const bgStyle = bgImageBase64 ? `background-image: url(${bgImageBase64}); background-size: cover; background-position: center;` : `background-color: ${bgColor};`;
+            const htmlContent = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><title>Secure Note</title><style>body{margin:0;padding:20px;height:100vh;box-sizing:border-box; ${bgStyle} color:${color}; font-family:${font}; font-size:${size}px; ${glowStyle} white-space:pre-wrap; word-wrap:break-word;}</style></head><body>${text}</body></html>`;
+            const blob = new Blob([htmlContent], {type: "text/html;charset=utf-8"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "secure_note.html"; a.click();
+        }
+
+        // --- FOOTPRINT LOGIC ---
+        window.loadFootprint = () => {
+            const d = document.getElementById('fp-data');
+            d.innerHTML = "";
+            const items = [
+                { l: "Браузер (User Agent)", v: navigator.userAgent },
+                { l: "Язык", v: navigator.language },
+                { l: "Платформа", v: navigator.platform },
+                { l: "Ядра процессора", v: navigator.hardwareConcurrency || "N/A" },
+                { l: "Оперативная память", v: (navigator.deviceMemory ? `~${navigator.deviceMemory} ГБ` : "N/A") },
+                { l: "Разрешение экрана", v: `${screen.width}x${screen.height}` },
+                { l: "Глубина цвета", v: `${screen.colorDepth} бит` },
+                { l: "Часовой пояс", v: Intl.DateTimeFormat().resolvedOptions().timeZone },
+                { l: "Cookie включены", v: navigator.cookieEnabled ? "ДА" : "НЕТ" },
+                { l: "Do Not Track", v: navigator.doNotTrack || "Нет" }
+            ];
+            items.forEach(i => d.innerHTML += `<div class="fp-item"><span class="fp-label">${i.l}:</span> <span class="fp-value">${i.v}</span></div>`);
+        }
+
+        // --- STEGANOGRAPHY LOGIC ---
+        document.getElementById('stegoInput').onchange = (e) => {
+            const file = e.target.files[0];
+            if(file) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    bgImageBase64 = e.target.result;
-                    document.getElementById('securePad').style.backgroundImage = `url(${bgImageBase64})`;
+                reader.onload = (ev) => {
+                    const img = document.getElementById('stegoPreview');
+                    img.src = ev.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('stegoPlaceholder').style.display = 'none';
                 };
                 reader.readAsDataURL(file);
             }
-        }
-        
-        window.clearBgImage = () => {
-            bgImageBase64 = "";
-            document.getElementById('securePad').style.backgroundImage = "none";
-            document.getElementById('edBgImageInput').value = "";
-        }
+        };
 
-        window.toggleGlow = () => document.getElementById('securePad').classList.toggle('glow-text');
-        window.downloadTxt = () => {
-            const blob = new Blob([document.getElementById('securePad').value], {type: "text/plain;charset=utf-8"});
-            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "secure_note.txt"; a.click();
-        }
-        window.downloadHtml = () => {
-            const text = document.getElementById('securePad').value;
-            const color = document.getElementById('securePad').style.color || '#00ff00';
-            const bgColor = document.getElementById('securePad').style.backgroundColor || '#000000';
-            const font = document.getElementById('edFont').value;
-            const size = document.getElementById('edSize').value;
-            const isGlow = document.getElementById('securePad').classList.contains('glow-text');
-            const glowStyle = isGlow ? "text-shadow: 0 0 5px currentColor;" : "";
+        window.stegoEncode = () => {
+            const fileInput = document.getElementById('stegoInput');
+            const text = document.getElementById('stegoText').value;
+            const status = document.getElementById('stegoStatus');
             
-            // Если есть картинка, вставляем её
-            const bgStyle = bgImageBase64 ? `background-image: url(${bgImageBase64}); background-size: cover; background-position: center;` : `background-color: ${bgColor};`;
+            if(!fileInput.files[0] || !text) { status.innerText = "Выберите картинку и введите текст!"; return; }
+            
+            status.innerText = "Шифрование...";
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.getElementById('stegoCanvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width; canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imgData.data;
+                    
+                    // Convert text to binary string
+                    let binaryText = "";
+                    for (let i = 0; i < text.length; i++) {
+                        let binaryChar = text.charCodeAt(i).toString(2).padStart(8, "0");
+                        binaryText += binaryChar;
+                    }
+                    // Add terminator (null char)
+                    binaryText += "00000000";
+                    
+                    if(binaryText.length > data.length / 4) { status.innerText = "Текст слишком длинный для этой картинки!"; return; }
+                    
+                    let dataIndex = 0;
+                    for(let i=0; i < binaryText.length; i++) {
+                        // Modify LSB of Red channel (every 4th value is R of next pixel)
+                        // Simple LSB: clear last bit, add new bit
+                        // We use data[dataIndex] which is R, G, B, A sequentially
+                        // Let's just use every channel except Alpha
+                        if((dataIndex + 1) % 4 === 0) dataIndex++; // Skip Alpha
+                        
+                        let bit = parseInt(binaryText[i]);
+                        data[dataIndex] = (data[dataIndex] & ~1) | bit;
+                        dataIndex++;
+                    }
+                    
+                    ctx.putImageData(imgData, 0, 0);
+                    const newDataUrl = canvas.toDataURL("image/png");
+                    
+                    const link = document.createElement('a');
+                    link.download = "secret_image.png";
+                    link.href = newDataUrl;
+                    link.click();
+                    status.innerText = "Готово! Картинка скачана.";
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        };
 
-            const htmlContent = `
-<!DOCTYPE html>
-<html lang="ru">
-<head><meta charset="UTF-8"><title>Secure Note</title>
-<style>body{margin:0;padding:20px;height:100vh;box-sizing:border-box; ${bgStyle} color:${color}; font-family:${font}; font-size:${size}px; ${glowStyle} white-space:pre-wrap; word-wrap:break-word;}</style>
-</head><body>${text}</body></html>`;
-
-            const blob = new Blob([htmlContent], {type: "text/html;charset=utf-8"});
-            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "secure_note.html"; a.click();
-        }
+        window.stegoDecode = () => {
+            const fileInput = document.getElementById('stegoInput');
+            const status = document.getElementById('stegoStatus');
+            const textArea = document.getElementById('stegoText');
+            
+            if(!fileInput.files[0]) { status.innerText = "Загрузите картинку!"; return; }
+            
+            status.innerText = "Дешифровка...";
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.getElementById('stegoCanvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width; canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imgData.data;
+                    
+                    let binaryText = "";
+                    let charBinary = "";
+                    let text = "";
+                    
+                    let dataIndex = 0;
+                    
+                    while(dataIndex < data.length) {
+                        if((dataIndex + 1) % 4 === 0) { dataIndex++; continue; } // Skip Alpha
+                        
+                        // Read LSB
+                        let bit = data[dataIndex] & 1;
+                        charBinary += bit;
+                        
+                        if(charBinary.length === 8) {
+                            if(charBinary === "00000000") break; // Terminator found
+                            text += String.fromCharCode(parseInt(charBinary, 2));
+                            charBinary = "";
+                        }
+                        dataIndex++;
+                    }
+                    
+                    textArea.value = text;
+                    status.innerText = "Готово! Текст извлечен.";
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        };
 
         // --- 1. VIRUS HUNTER ---
         const batRules=[{regex:/del\s|erase\s/i,msg:"УДАЛЕНИЕ ФАЙЛА",level:1},{regex:/shutdown/i,msg:"ВЫКЛЮЧЕНИЕ",level:1},{regex:/format\s/i,msg:"ФОРМАТИРОВАНИЕ",level:3},{regex:/reg\s+add/i,msg:"ИЗМЕНЕНИЕ РЕЕСТРА",level:3},{regex:/%0/i,msg:"FORK-БОМБА",level:2}];
@@ -608,8 +812,13 @@
             const m=document.getElementById('scanMode').value; const t=document.getElementById('targetType').value;
             document.getElementById('btnScan').disabled=true; document.getElementById('terminal').innerHTML=""; log(`СКАНИРОВАНИЕ [${m}]...`);
             let maxL=0; let fT=[]; let rules=batRules; if(t==='py')rules=pyRules; if(t==='exe')rules=exeRules; if(t==='vbs')rules=vbsRules;
-            if(t==='zip'||fileName.endsWith('.zip')){try{const z=new JSZip();const c=await z.loadAsync(fileRawData);for(const[p,e]of Object.entries(c.files)){if(e.dir)continue;log(`ZIP: ${p}`,"zip-entry");if(p.endsWith('.bat')){const txt=await e.async("string");if(txt.includes("del ")){maxL=3;fT.push({msg:`ВИРУС В ZIP: ${p}`,level:3});}}}finish(maxL,m,fT);}catch(e){log("ОШИБКА ZIP","danger");finish(0,m,[]);}return;}
-            if(t==='exe'||t==='jar'){const r=new FileReader();r.onload=(e)=>{const txt=e.target.result;if(txt.includes("ShellExecute")||txt.includes("cmd.exe")){maxL=2;fT.push({msg:"ПОДОЗРИТЕЛЬНЫЕ СТРОКИ",level:2});}finish(maxL,m,fT);};r.readAsText(fileRawData,'ISO-8859-1');return;}
+            
+            if(t==='zip'||fileName.endsWith('.zip')){
+                try{const z=new JSZip();const c=await z.loadAsync(fileRawData);for(const[p,e]of Object.entries(c.files)){if(e.dir)continue;log(`ZIP: ${p}`,"zip-entry");if(p.endsWith('.bat')){const txt=await e.async("string");if(txt.includes("del ")){maxL=3;fT.push({msg:`ВИРУС В ZIP: ${p}`,level:3});}}}finish(maxL,m,fT);}catch(e){log("ОШИБКА ZIP","danger");finish(0,m,[]);}return;
+            }
+            if(t==='exe'||t==='jar'){
+                const r=new FileReader();r.onload=(e)=>{const txt=e.target.result;if(txt.includes("ShellExecute")||txt.includes("cmd.exe")){maxL=2;fT.push({msg:"ПОДОЗРИТЕЛЬНЫЕ СТРОКИ",level:2});}finish(maxL,m,fT);};r.readAsText(fileRawData,'ISO-8859-1');return;
+            }
             let i=0;function step(){if(i>=fileLines.length){finish(maxL,m,fT);return;}let l=fileLines[i].trim();if(m==='full'&&(t==='bat'||t==='vbs')&&l.includes('^')){l=l.replaceAll('^','');if(Math.random()>0.9)log("ДЕШИФРОВКА...","decrypt");}if(l.length>3&&!l.startsWith('rem')){for(const r of rules){if(r.regex.test(l)){if(r.level>maxL)maxL=r.level;fT.push({msg:r.msg,level:r.level});log(`ОБНАРУЖЕНО: ${r.msg}`,`level-${r.level}`);break;}}}i++;setTimeout(step,2);}step();
         };
         function finish(l,m,t){
@@ -623,7 +832,14 @@
 
         // --- 2. RICKROLL ---
         const rickIds=["dQw4w9WgXcQ","xvFZjo5PgG0"];const rickDomains=["tomorrowtides.com"];const rickKeywords=["rick","рик","ролл","трол","отправь"];
-        window.startRickScan=async()=>{const a=document.getElementById("rickPlayer");if(a.paused){a.volume=0.3;a.play().catch(()=>{});}const u=document.getElementById('urlInput').value.trim();if(!u)return;const r=document.getElementById('rick-result');r.style.display='block';r.innerHTML='<span class="loader"></span> Сканирование...';await new Promise(res=>setTimeout(res,1500));let id=null;const m=u.match(/^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?)|(shorts\/))\??v?=?([^#&?]*).*/);if(m&&m[8].length==11)id=m[8];if(id&&rickIds.includes(id)){showRickResult("DANGER","ЭТО РИКРОЛЛ!","ID совпал.");return;}for(let d of rickDomains){if(u.includes(d)){showRickResult("DANGER","ФЕЙКОВЫЙ САЙТ","Домен пранков.");return;}}if(currentUserSub!=='Full'){showRickResult("SAFE","БАЗА ЧИСТА","Нет в черном списке (Deep Scan только в FULL).");return;}if(id){try{const req=await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${id}`);const d=await req.json();if(d.title){const tl=d.title.toLowerCase();let fk=rickKeywords.find(w=>tl.includes(w));if(fk)showRickResult("DANGER","СКРЫТАЯ УГРОЗА",`Название: "${d.title}"`);else showRickResult("SAFE","ЧИСТО",`Название: "${d.title}"`);}else showRickResult("SAFE","ЧИСТО","Название не получено.");}catch(e){showRickResult("WARNING","ОШИБКА","Сбой проверки названия.");}}else showRickResult("WARNING","НЕИЗВЕСТНО","Не YouTube.");};
+        window.startRickScan=async()=>{
+            const u=document.getElementById('urlInput').value.trim(); if(!u)return;
+            const r=document.getElementById('rick-result'); r.style.display='block'; r.innerHTML='Сканирование...';
+            const m=u.match(/v?=([^#&?]*)/);
+            if(m&&rickIds.includes(m[1])){showRickResult("DANGER","ЭТО РИКРОЛЛ!","ID совпал."); return;}
+            if(currentUserSub!=='Full'){showRickResult("SAFE","БАЗА ЧИСТА","Нет в списке (Deep Scan в FULL)."); return;}
+            try{const f=await fetch(`https://noembed.com/embed?url=${u}`);const d=await f.json();if(d.title&&d.title.toLowerCase().includes("rick"))r.innerHTML='<b style="color:red">СКРЫТАЯ УГРОЗА!</b>';else r.innerHTML='<b style="color:lime">ЧИСТО.</b>';}catch{r.innerHTML='Ошибка';}
+        }
         function showRickResult(t,title,desc){const r=document.getElementById('rick-result');let c=t==="DANGER"?"red":(t==="SAFE"?"lime":"orange");r.style.borderColor=c;r.style.color=c;r.innerHTML=`<div style="font-size:1.4em; font-weight:bold;">${title}</div><div style="color:#ccc;">${desc}</div>`;}
 
         // --- 3. OSINT ---
