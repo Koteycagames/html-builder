@@ -3,1248 +3,688 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Конструктор Интерактивных Приложений</title>
+    <title>CYBER SECURITY HUB v19.0</title>
+    <!-- Библиотеки -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
     
     <style>
-        /* --- ОБЩАЯ СТРУКТУРА (без изменений) --- */
+        /* --- ОБЩИЕ СТИЛИ --- */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: grid;
-            grid-template-columns: 240px 1fr 300px;
-            grid-template-rows: 1fr auto;
-            gap: 12px;
-            height: 100vh;
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Consolas', 'Courier New', monospace;
             margin: 0;
-            padding: 12px;
-            box-sizing: border-box;
-            background-color: #f0f2f5;
-        }
-        .panel {
-            border: 1px solid #d9d9d9; border-radius: 8px;
-            background-color: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            padding: 16px; overflow-y: auto; display: flex; flex-direction: column; 
-        }
-        h3 {
-            margin-top: 0; border-bottom: 1px solid #eee;
-            padding-bottom: 8px; color: #333;
-        }
-        h4 { margin-top: 16px; margin-bottom: 8px; color: #111; }
-
-        /* --- ЛЕВАЯ ПАНЕЛЬ (без изменений) --- */
-        #left-panel {
-            grid-row: 1 / 2; grid-column: 1 / 2; padding: 0; 
-            gap: 12px; overflow-y: hidden;
-        }
-        #palette, #screens { flex-shrink: 0; }
-        #screens { flex-grow: 1; overflow-y: auto; }
-        .tool {
-            padding: 10px 12px; margin-bottom: 8px; border: 1px solid #007bff;
-            background-color: #e6f2ff; color: #0056b3; border-radius: 6px;
-            cursor: move; font-weight: 500; text-align: center;
-            transition: background-color 0.2s, box-shadow 0.2s;
-        }
-        .tool:hover { background-color: #d0e7ff; box-shadow: 0 2px 4px rgba(0,123,255,0.2); }
-        #screen-list { list-style: none; padding: 0; margin: 0; }
-        .screen-item {
-            padding: 10px; border: 1px solid #ddd; border-radius: 6px;
-            margin-bottom: 5px; cursor: pointer; display: flex;
-            justify-content: space-between; align-items: center;
-        }
-        .screen-item:hover { background-color: #f9f9f9; }
-        .screen-item.active {
-            background-color: #e6f2ff; border-color: #007bff; font-weight: 600;
-        }
-        .screens-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 8px;
-            margin-bottom: 8px; 
-        }
-        
-        .screens-header h3 {
-            margin-top: 0;
-            border-bottom: none;
-            padding-bottom: 0;
-        }
-        
-        .quick-add-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: none;
-            background-color: #007bff;
-            color: white;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            line-height: 26px; 
             padding: 0;
-            flex-shrink: 0;
-            transition: background-color 0.2s;
-        }
-        .quick-add-btn:hover {
-            background-color: #0056b3;
-        }
-        #add-screen-btn {
-            width: 100%; padding: 10px; border: none; border-radius: 6px;
-            background-color: #28a745; color: white; font-weight: 500;
-            cursor: pointer; margin-top: 10px;
-        }
-        #add-screen-btn:hover { background-color: #218838; }
-
-        /* --- ЦЕНТРАЛЬНАЯ ПАНЕЛЬ (ХОЛСТ) (без изменений) --- */
-        #canvas-wrapper {
-            grid-row: 1 / 2; grid-column: 2 / 3; border: 2px dashed #b0b0b0;
-            background-color: #ffffff; 
-            transition: border-color 0.2s, background-color 0.2s;
-            position: relative; 
-            overflow: hidden; padding: 0; 
-        }
-        #canvas-wrapper.drag-over { border-color: #007bff; background-color: #f0f8ff; }
-
-        .screen {
-            width: 100%; height: 100%; padding: 0; 
-            box-sizing: border-box; display: none; overflow: auto; 
-            background-color: #fafafa;
-            position: relative; 
-        }
-        .screen.active { display: block; }
-        
-        .screen > * {
-            position: absolute;
-            padding: 8px; 
-            cursor: grab; 
-            border: 2px solid transparent; transition: border-color 0.2s;
-            min-height: 20px; text-align: inherit; 
-            max-width: 100%; 
-            box-sizing: border-box; 
-            flex-shrink: 0;
-        }
-        .screen > .dragging {
-             cursor: grabbing; 
-             opacity: 0.6;
-             z-index: 10; 
-        }
-        
-        .screen img {
-            display: block;
-        }
-        .screen > .selected {
-            border: 2px solid #007bff;
-            box-shadow: 0 0 10px rgba(0,123,255,0.3);
-            z-index: 9; 
+            height: 100vh;
+            overflow: hidden;
         }
 
-        /* --- ПРАВАЯ ПАНЕЛЬ (Стили) (без изменений) --- */
-        #properties {
-            grid-row: 1 / 2; grid-column: 3 / 4; padding-top: 0; 
-        }
-        .props-tabs {
-            display: flex; border-bottom: 1px solid #d9d9d9;
-            margin: 0 -16px 16px -16px; padding: 0 16px;
-        }
-        .props-tabs button {
-            padding: 10px 16px; border: none; background: none;
-            cursor: pointer; font-size: 14px; font-weight: 500;
-            color: #555; border-bottom: 2px solid transparent;
-            margin-bottom: -1px; 
-        }
-        .props-tabs button.active { color: #007bff; border-bottom-color: #007bff; }
-        .props-tab-panel { display: none; }
-        .props-tab-panel.active { display: block; }
-        .prop-group {
-            margin-bottom: 16px; border: 1px solid #eee; padding: 10px; border-radius: 6px;
-        }
-        label {
-            display: block; margin-bottom: 6px; font-weight: 600;
-            color: #555; font-size: 14px;
-        }
-        input, textarea, select {
-            width: 100%; padding: 8px; border: 1px solid #ccc;
-            border-radius: 4px; box-sizing: border-box;
-            margin-top: 4px; 
-        }
-        #props-placeholder { color: #888; font-style: italic; }
-        #delete-btn {
-            background-color: #dc3545; color: white; border: none;
-            padding: 8px 12px; border-radius: 4px; cursor: pointer;
-            width: 100%; margin-top: 10px; font-weight: 500;
-        }
-        #delete-btn:hover { background-color: #c82333; }
+        /* Утилиты */
+        .screen { display: none; height: 100%; width: 100%; position: relative; flex-direction: column; align-items: center; justify-content: center; }
+        .screen.active { display: flex; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: #333; }
+        ::-webkit-scrollbar-thumb:hover { background: #00ff00; }
 
-        /* --- СТИЛИ ДЛЯ ПАНЕЛИ ДЕЙСТВИЙ (без изменений) --- */
-        .action-block {
-            border: 1px solid #ddd;
-            background: #f9f9f9;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            position: relative;
+        /* --- ЗАГРУЗЧИК --- */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 9999;
+            display: none; opacity: 0;
+            flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.5s ease-in-out;
         }
-        .action-block label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 2px;
-        }
-        .action-block select {
-            margin-bottom: 8px;
-        }
-        .delete-action-btn {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            width: 22px;
-            height: 22px;
-            border: none;
-            background: #f0f0f0;
-            color: #888;
+        .cyber-loader {
+            width: 80px; height: 80px;
+            border: 5px solid rgba(0, 255, 0, 0.1);
+            border-top: 5px solid #00ff00;
             border-radius: 50%;
-            cursor: pointer;
-            font-weight: bold;
-            line-height: 20px;
-            text-align: center;
+            animation: cyber-spin 2.5s linear infinite;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            margin-bottom: 20px;
         }
-        .delete-action-btn:hover { background: #e0e0e0; color: #333; }
-        #add-action-btn {
-            width: 100%;
-            padding: 10px;
-            font-weight: 500;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        #add-action-btn:hover { background-color: #0056b3; }
+        .loading-text { font-size: 1.2em; letter-spacing: 2px; animation: blink 1s infinite; }
+        @keyframes cyber-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes blink { 50% { opacity: 0.5; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* --- ВХОД --- */
+        .auth-box { border: 1px solid #00ff00; padding: 30px; width: 300px; text-align: center; box-shadow: 0 0 15px rgba(0, 255, 0, 0.1); background: #050505; }
+        .auth-input { width: 100%; padding: 10px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #00ff00; box-sizing: border-box; font-family: inherit; }
+        .auth-btn { width: 100%; padding: 10px; background: #004400; color: #fff; border: none; cursor: pointer; font-weight: bold; margin-bottom: 5px; font-family: inherit; }
+        .auth-btn:hover { background: #00ff00; color: #000; }
 
-        /* --- ОБЛАСТЬ ЭКСПОРТА (без изменений) --- */
-        #export-area {
-            grid-row: 2 / 3; grid-column: 1 / -1; 
-            display: flex; flex-direction: column; gap: 8px; margin-top: 12px;
-        }
-        #exportBtn {
-            padding: 12px; font-size: 16px; font-weight: 600;
-            background-color: #007bff; color: white; border: none;
-            border-radius: 6px; cursor: pointer; transition: background-color 0.2s;
-        }
-        #exportBtn:hover { background-color: #0056b3; }
-        #exportOutput {
-            width: 100%; min-height: 150px; border: 1px solid #ccc;
-            border-radius: 6px; padding: 10px;
-            font-family: "Courier New", Courier, monospace; font-size: 14px;
-            box-sizing: border-box; resize: vertical;
-        }
-
-
-        /* --- СТИЛИ ДЛЯ МОДАЛЬНОГО ОКНА (без изменений) --- */
-        .modal-overlay {
-            display: none; 
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background: #fff;
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            width: 90%;
-            max-width: 450px;
-        }
-        .modal-content h3 {
-            margin-top: 0;
-            color: #333;
-        }
-        .modal-content p {
-            font-size: 14px;
-            color: #555;
-            margin-top: 0;
-            margin-bottom: 12px;
-        }
-        .modal-content input[type="text"] {
-            margin-bottom: 16px;
-        }
+        /* --- ДАШБОРД --- */
+        .dashboard-container { text-align: center; animation: fadeIn 0.5s; max-width: 900px; }
+        .hub-title { font-size: 2em; margin-bottom: 40px; text-shadow: 0 0 10px #00ff00; letter-spacing: 3px; text-transform: uppercase; }
+        .hub-grid { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
         
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 16px;
+        .hub-card {
+            width: 160px; height: 160px;
+            border: 2px solid #333; background: #111;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.3s; border-radius: 10px; position: relative;
         }
+        .hub-card:hover { border-color: #00ff00; box-shadow: 0 0 20px rgba(0,255,0,0.3); transform: translateY(-5px); }
         
-        #modal-submit-btn,
-        #modal-close-btn {
-            width: 100%;
-            padding: 10px;
-            font-weight: 500;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
+        .hub-card.locked { opacity: 0.4; filter: grayscale(100%); border-color: #555; cursor: not-allowed; }
+        .hub-card.locked:hover { transform: none; box-shadow: none; border-color: #555; }
+        .lock-icon { position: absolute; top: 10px; right: 10px; font-size: 1.2em; color: #fff; display: none; }
+        .hub-card.locked .lock-icon { display: block; }
+
+        .hub-card.soon { opacity: 0.5; border-color: #444; cursor: default; }
+        .hub-card.soon:hover { transform: none; box-shadow: none; border-color: #444; }
+        .soon-text { color: #ff0000; font-size: 0.8em; margin-top: 5px; font-weight: bold; letter-spacing: 1px; text-shadow: 0 0 5px red; }
+
+        .card-icon { font-size: 3em; margin-bottom: 10px; }
+        .card-title { font-weight: bold; font-size: 0.8em; text-align: center; text-transform: uppercase; }
+        .user-welcome { position: absolute; top: 20px; right: 20px; color: #666; font-size: 0.8em; }
+
+        /* --- МОДУЛИ (UI) --- */
+        .module-container {
+            background-color: #1a1a1a; padding: 20px; border: 1px solid #00ff00;
+            border-radius: 5px; box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            width: 90%; max-width: 900px; position: relative; z-index: 1; animation: fadeIn 0.3s;
         }
 
-        #modal-submit-btn {
-            background-color: #007bff; 
-            color: white;
+        /* EDITOR UI */
+        .editor-controls { 
+            display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; 
+            background: #111; padding: 10px; border: 1px solid #333; justify-content: space-between;
         }
-        #modal-submit-btn:hover {
-            background-color: #0056b3;
-        }
+        .editor-group { display: flex; gap: 5px; align-items: center; }
+        .editor-label { font-size: 0.8em; color: #888; }
         
-        #modal-close-btn {
-            background-color: #6c757d; 
-            color: white;
+        .editor-textarea {
+            width: 100%; height: 450px; background: #000; color: #0f0;
+            border: 1px solid #333; padding: 15px; font-family: 'Consolas', monospace;
+            font-size: 16px; resize: none; outline: none; box-sizing: border-box;
+            background-size: cover; background-position: center; background-repeat: no-repeat;
         }
-        #modal-close-btn:hover {
-            background-color: #5a6268;
+        .editor-textarea:focus { border-color: #00ff00; }
+        .glow-text { text-shadow: 0 0 5px currentColor; }
+        
+        /* Virus Hunter UI */
+        .vh-header { width: 1000px; max-width: 95%; display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
+        .control-bar { display: flex; background: #111; border: 1px solid #333; padding: 10px; border-radius: 3px; gap: 5px; width: 1000px; max-width: 95%; box-sizing: border-box; }
+        select, input[type="file"], input[type="text"], button, input[type="number"], input[type="color"] { 
+            background: #222; color: #e0e0e0; border: 1px solid #444; padding: 5px 10px; font-family: inherit; font-size: 14px; height: 40px; box-sizing: border-box; 
         }
+        #targetType { width: 180px; } #fileInput { flex-grow: 1; color: #aaa; } #scanMode { width: 160px; }
+        option:disabled { color: #555; background: #111; }
 
+        #btnScan { background: #006400; color: #fff; border: none; font-weight: bold; width: 120px; cursor: pointer; transition: 0.2s; }
+        #btnScan:hover { background: #00ff00; color: #000; }
+        #btnScan:disabled { background: #333; color: #555; cursor: not-allowed; }
+        .terminal { width: 1000px; max-width: 95%; height: 450px; border: 1px solid #00ff00; background: #000; padding: 15px; overflow-y: auto; margin-top: 10px; font-size: 14px; box-shadow: 0 0 10px rgba(0, 255, 0, 0.05); }
+        
+        /* Элементы модулей */
+        .result-box { background: #000; border: 1px solid #333; padding: 15px; min-height: 150px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; font-size: 14px; color: #ccc; margin-top: 10px; }
+        .action-bar { display: flex; gap: 10px; margin-bottom: 10px; }
+        .key-val { margin-bottom: 5px; border-bottom: 1px dashed #333; padding-bottom: 2px; }
+        .key { color: #00ff00; font-weight: bold; margin-right: 10px; }
+
+        /* Меню и кнопки */
+        .top-menu { position: absolute; top: 20px; right: 20px; z-index: 100;}
+        .menu-btn { background: #111; border: 1px solid #333; color: #666; padding: 5px 10px; cursor: pointer; margin-left: 5px; font-family: inherit; }
+        .menu-btn:hover { border-color: #00ff00; color: #00ff00; }
+        .back-btn-abs { position: absolute; top: 20px; left: 20px; z-index: 10; background: #333; color: #fff; border: 1px solid #555; padding: 5px 15px; cursor: pointer; font-family: inherit; }
+        .back-btn-abs:hover { background: #555; }
+
+        /* RICKROLL UI */
+        .rick-legacy-container { background-color: #1a1a1a; padding: 2.5rem; border: 1px solid #00ff00; border-radius: 5px; box-shadow: 0 0 20px rgba(0, 255, 0, 0.2); width: 90%; max-width: 700px; text-align: center; position: relative; z-index: 1; }
+        .rick-input { width: 90%; padding: 15px; background: #000; border: 1px solid #333; color: #00ff00; font-family: 'Courier New', monospace; font-size: 1.2rem; margin: 20px 0; outline: none; text-align: center; }
+        .rick-input:focus { border-color: #00ff00; box-shadow: 0 0 10px rgba(0,255,0,0.3); }
+        .rick-btn { background-color: #003300; color: #00ff00; border: 1px solid #00ff00; padding: 15px 40px; font-size: 1.2rem; cursor: pointer; text-transform: uppercase; font-weight: bold; transition: 0.3s; font-family: 'Courier New', monospace; }
+        .rick-btn:hover { background-color: #00ff00; color: #000; box-shadow: 0 0 20px #00ff00; }
+        #rick-result { margin-top: 25px; padding: 20px; border: 1px dashed #333; display: none; font-family: sans-serif; text-align: left; }
+        .scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 5px; background-color: rgba(0, 255, 0, 0.5); animation: scan 3s linear infinite; pointer-events: none; z-index: 0; }
+        @keyframes scan { 0% { top: -5%; } 100% { top: 105%; } }
+
+        /* Логи и вердикты */
+        .log-line { margin-bottom: 4px; word-break: break-all; }
+        .level-1 { color: #ffff00; } .level-2 { color: #ff8800; } .level-3 { color: #ff0000; font-weight: bold; }
+        .sys { color: #555; } .decrypt { color: #d600ff; } .zip-entry { color: #ffff00; border-top: 1px dashed #333; margin-top: 5px; padding-top: 2px; }
+
+        .verdict-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); border: 2px solid #fff; padding: 30px; text-align: center; z-index: 100; box-shadow: 0 0 30px rgba(255,255,255,0.2); width: 400px; }
+        .v-score { font-size: 36px; font-weight: bold; margin: 10px 0; }
+        .v-details-box { background: #111; border: 1px solid #333; padding: 10px; margin-bottom: 20px; max-height: 200px; overflow-y: auto; text-align: left; font-size: 12px; display: none; }
+        
+        .feed-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 300px; background: #111; border-left: 1px solid #00ff00; z-index: 50; display: none; flex-direction: column; padding: 10px; }
+        .feed-panel.open { display: flex; }
+        .feed-item { background: #1a1a1a; padding: 5px; margin-bottom: 5px; border-left: 4px solid #555; font-size: 12px; color: #ccc; }
     </style>
 </head>
 <body>
 
-    <div id="left-panel" class="panel">
-        <div id="palette">
-            <h3>Инструменты</h3>
-            <div class="tool" draggable="true" data-type="h1">Заголовок H1</div>
-            <div class="tool" draggable="true" data-type="p">Параграф</div>
-            <div class="tool" draggable="true" data-type="img">Изображение</div>
-            <div class="tool" draggable="true" data-type="button">Кнопка</div>
-            <div class="tool" draggable="true" data-type="input">Поле ввода</div>
-            <div class="tool" draggable="true" data-type="div">Контейнер (Div)</div>
-        </div>
-        
-        <div id="screens">
-            <div class="screens-header">
-                <h3>Экраны</h3>
-                <button id="add-screen-btn-quick" class="quick-add-btn">+</button>
-            </div>
-            <ul id="screen-list"></ul>
-            <button id="add-screen-btn">+ Добавить экран</button>
+    <!-- ЗАГРУЗЧИК -->
+    <div id="loading-overlay">
+        <div class="cyber-loader"></div>
+        <div class="loading-text" id="loading-msg">ЗАГРУЗКА...</div>
+    </div>
+
+    <!-- 1. ВХОД -->
+    <div id="auth-screen" class="screen active">
+        <div class="auth-box">
+            <h2 style="margin:0 0 20px 0; color:#00ff00;">SYSTEM LOGIN</h2>
+            <input type="email" id="email" class="auth-input" placeholder="Email адрес">
+            <input type="password" id="password" class="auth-input" placeholder="Пароль">
+            <button class="auth-btn" id="btnLogin">ВОЙТИ</button>
+            <button class="auth-btn" style="background:#222;" id="btnRegister">РЕГИСТРАЦИЯ</button>
+            <div id="auth-error" style="color:red; margin-top:10px; display:none;">Ошибка</div>
         </div>
     </div>
 
-    <div id="canvas-wrapper">
-        </div>
+    <!-- 2. ДАШБОРД -->
+    <div id="dashboard-screen" class="screen">
+        <div class="user-welcome">ПОЛЬЗОВАТЕЛЬ: <span id="user-display">...</span> | <span onclick="doLogout()" style="cursor:pointer; text-decoration:underline;">ВЫХОД</span></div>
+        
+        <div class="dashboard-container">
+            <div class="hub-title">ГЛАВНОЕ МЕНЮ v19.0</div>
+            <div class="hub-grid">
+                <!-- VIRUS -->
+                <div class="hub-card" id="card-virus" onclick="openTool('virus')">
+                    <div class="lock-icon">🔒</div>
+                    <div class="card-icon">🧬</div>
+                    <div class="card-title">АНТИВИРУС</div>
+                </div>
+                
+                <!-- MAKER (SOON) -->
+                <div class="hub-card soon">
+                    <div class="card-icon" style="filter:grayscale(100%); color:#555;">🛠️</div>
+                    <div class="card-title" style="color:#666;">КОНСТРУКТОР</div>
+                    <div class="soon-text">СКОРО...</div>
+                </div>
 
-    <div id="properties" class="panel">
-        <div class="props-tabs" style="display: none;"> <button class="props-tab-btn active" data-tab="props-content">Стиль</button>
-            <button class="props-tab-btn" data-tab="props-actions">Действия</button>
+                <!-- EDITOR (NEW) -->
+                <div class="hub-card" id="card-editor" onclick="openTool('editor')">
+                    <div class="lock-icon">🔒</div>
+                    <div class="card-icon">📝</div>
+                    <div class="card-title">SECURE PAD</div>
+                </div>
+
+                <!-- RICK -->
+                <div class="hub-card" id="card-rick" onclick="openTool('rick')">
+                    <div class="lock-icon">🔒</div>
+                    <div class="card-icon">🕵️‍♂️</div>
+                    <div class="card-title">АНТИ-ТРОЛЛ</div>
+                </div>
+                <!-- OSINT -->
+                <div class="hub-card" id="card-osint" onclick="openTool('osint')">
+                    <div class="lock-icon">🔒</div>
+                    <div class="card-icon">👁️</div>
+                    <div class="card-title">OSINT СКАНЕР</div>
+                </div>
+                <!-- PASS -->
+                <div class="hub-card" id="card-pass" onclick="openTool('pass')">
+                    <div class="lock-icon">🔒</div>
+                    <div class="card-icon">🔐</div>
+                    <div class="card-title">АУДИТ ПАРОЛЕЙ</div>
+                </div>
+                <!-- EXIF -->
+                <div class="hub-card" id="card-exif" onclick="openTool('exif')">
+                    <div class="lock-icon">🔒</div>
+                    <div class="card-icon">📸</div>
+                    <div class="card-title">EXIF ШПИОН</div>
+                </div>
+                <!-- CRYPTO -->
+                <div class="hub-card" id="card-crypto" onclick="openTool('crypto')">
+                    <div class="lock-icon">🔒</div>
+                    <div class="card-icon">🔓</div>
+                    <div class="card-title">КРИПТО СТАНЦИЯ</div>
+                </div>
+            </div>
         </div>
-        <div id="props-content" class="props-tab-panel active">
-            </div>
-        <div id="props-actions" class="props-tab-panel">
-            </div>
-        <div id="props-placeholder" style="display: none;">
-            </div>
     </div>
 
-    <div id="export-area">
-        <button id="exportBtn">Экспортировать Приложение (HTML)</button>
-        <textarea id="exportOutput" readonly placeholder="Здесь появится готовый HTML-код приложения..."></textarea>
+    <!-- 3. VIRUS HUNTER -->
+    <div id="virus-tool" class="screen">
+        <div class="vh-header">
+            <button class="back-btn-abs" style="position:static;" onclick="showDashboard()">« МЕНЮ</button>
+            <div style="font-weight:bold;">VIRUS HUNTER v13.2</div>
+            <button class="menu-btn" onclick="toggleFeed()">ЛЕНТА</button>
+        </div>
+
+        <div class="control-bar">
+            <select id="targetType" title="Тип">
+                <option value="bat">Batch (.bat)</option>
+                <option value="py">Python (.py)</option>
+                <option value="exe" disabled>Binary (.exe) [LOCK]</option>
+                <option value="jar" disabled>Java (.jar) [LOCK]</option>
+                <option value="vbs">VBScript (.vbs)</option>
+                <option value="ps1">PowerShell</option>
+                <option value="web" disabled>Web (.js/.html) [LOCK]</option>
+                <option value="zip" disabled>Архив (.zip) [LOCK]</option>
+            </select>
+            <input type="file" id="fileInput">
+            <select id="scanMode"><option value="fast">Быстрое</option><option value="auto" disabled>Авто [LOCK]</option><option value="full" disabled>Полное [LOCK]</option></select>
+            <button id="btnScan" disabled onclick="startScanLogic()">ЗАПУСК</button>
+        </div>
+        <div class="terminal" id="terminal"><div class="sys">> Модуль готов к работе.</div></div>
     </div>
 
-    <div id="template-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h3>Загрузить шаблон</h3>
-            <p>Введите команду для загрузки шаблона:</p>
-            <input type="text" id="template-command-input" placeholder="... (пока для теста)">
-            
-            <div class="modal-buttons">
-                <button id="modal-submit-btn">Ввести</button>
-                <button id="modal-close-btn">Закрыть</button>
+    <!-- 4. SCRIPT MAKER (HIDDEN) -->
+    <div id="maker-tool" class="screen"></div>
+
+    <!-- 5. SECURE EDITOR (PRO UPDATE) -->
+    <div id="editor-tool" class="screen">
+        <button class="back-btn-abs" onclick="showDashboard()">« МЕНЮ</button>
+        <div class="module-container" style="max-width:1000px;">
+            <h1 style="text-align:center;">📝 ЗАЩИЩЕННЫЙ РЕДАКТОР</h1>
+            <div class="editor-controls">
+                <div class="editor-group">
+                    <span class="editor-label">Текст:</span>
+                    <select id="edColorPreset" onchange="applyPresetColor()" style="width:100px;">
+                        <option value="#00ff00">Зеленый</option>
+                        <option value="#ffffff">Белый</option>
+                        <option value="#ff0000">Красный</option>
+                        <option value="#ffd700">Золотой</option>
+                        <option value="#00ffff">Циан</option>
+                        <option value="#ff00ff">Пурпур</option>
+                        <option value="#ff4500">Оранжевый</option>
+                        <option value="#adff2f">Лайм</option>
+                    </select>
+                    <input type="color" id="edCustomColor" onchange="applyCustomColor()" title="Палитра" style="width:40px; padding:0;">
+                </div>
+
+                <div class="editor-group">
+                    <span class="editor-label">Фон:</span>
+                    <input type="color" id="edBgColor" value="#000000" onchange="updateEditorStyle()" title="Цвет фона" style="width:40px; padding:0;">
+                    <input type="file" id="edBgImageInput" accept="image/*" style="display:none;" onchange="uploadBgImage()">
+                    <button onclick="document.getElementById('edBgImageInput').click()" style="cursor:pointer; background:#222; color:#fff; border:1px solid #444; padding:2px 5px; height:30px;">IMG</button>
+                    <button onclick="clearBgImage()" style="cursor:pointer; background:#222; color:red; border:1px solid #444; padding:2px 5px; height:30px;">X</button>
+                </div>
+
+                <div class="editor-group">
+                    <span class="editor-label">Шрифт:</span>
+                    <select id="edFont" onchange="updateEditorStyle()" style="width:110px;">
+                        <option value="'Consolas', monospace">Consolas</option>
+                        <option value="'Courier New', monospace">Courier</option>
+                        <option value="Arial, sans-serif">Arial</option>
+                        <option value="'Verdana', sans-serif">Verdana</option>
+                        <option value="'Tahoma', sans-serif">Tahoma</option>
+                        <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+                        <option value="'Impact', sans-serif">Impact</option>
+                        <option value="'Georgia', serif">Georgia</option>
+                    </select>
+                </div>
+
+                <div class="editor-group">
+                    <span class="editor-label">Размер:</span>
+                    <input type="number" id="edSize" min="1" max="100" value="16" onchange="updateEditorStyle()" style="width:50px;">
+                </div>
+                
+                <button onclick="toggleGlow()" style="background:#333; color:cyan; border:1px solid cyan; cursor:pointer;">[GLOW]</button>
+                
+                <div class="editor-group" style="margin-left:auto;">
+                    <button onclick="downloadTxt()" style="background:#222; color:#fff; border:1px solid #555; cursor:pointer;">💾 TXT</button>
+                    <button onclick="downloadHtml()" style="background:#004400; color:#fff; border:1px solid #00ff00; cursor:pointer; font-weight:bold;">🎨 HTML</button>
+                </div>
             </div>
+            <textarea id="securePad" class="editor-textarea" placeholder="Введите секретные данные... (Автосохранение включено)"></textarea>
         </div>
     </div>
-    
 
-    <script>
-        // --- Глобальные переменные (без изменений) ---
-        const canvasWrapper = document.getElementById('canvas-wrapper');
-        const tools = document.querySelectorAll('.tool');
-        const propsTabsContainer = document.querySelector('.props-tabs');
-        const propsContent = document.getElementById('props-content');
-        const propsActions = document.getElementById('props-actions');
-        const propsPlaceholder = document.getElementById('props-placeholder');
-        const screenList = document.getElementById('screen-list');
-        const addScreenBtn = document.getElementById('add-screen-btn');
-        const addScreenBtnQuick = document.getElementById('add-screen-btn-quick'); 
-        const exportBtn = document.getElementById('exportBtn');
-        const exportOutput = document.getElementById('exportOutput');
-        
-        const templateModal = document.getElementById('template-modal');
-        const modalCloseBtn = document.getElementById('modal-close-btn');
-        const modalSubmitBtn = document.getElementById('modal-submit-btn'); 
-        const templateCommandInput = document.getElementById('template-command-input'); 
-        
-        let selectedElements = []; 
-        let currentScreenId = null; 
-        let elementCounters = {}; 
-        
-        let isDragging = false;
-        let dragOffsets = new Map(); 
+    <!-- 6. RICKROLL DETECTOR -->
+    <div id="rick-tool" class="screen">
+        <div class="scan-line"></div>
+        <button class="back-btn-abs" onclick="showDashboard()">« МЕНЮ</button>
+        <div class="rick-legacy-container">
+            <h1>🕵️‍♂️ Anti-Troll v3.0</h1>
+            <p style="color:#ccc; font-family:sans-serif;">Вставьте ссылку. Система проверит ID, домен и название.</p>
+            <input type="text" id="urlInput" class="rick-input" placeholder="Вставьте ссылку сюда..." autocomplete="off">
+            <br>
+            <button onclick="startRickScan()" id="rickScanBtn" class="rick-btn">АНАЛИЗИРОВАТЬ</button>
+            <div id="rick-result"></div>
+        </div>
+        <audio id="rickPlayer" loop><source src="https://ia801602.us.archive.org/11/items/Rick_Astley_Never_Gonna_Give_You_Up/Rick_Astley_Never_Gonna_Give_You_Up.mp3" type="audio/mpeg"></audio>
+    </div>
 
-        // --- ЛОГИКА УПРАВЛЕНИЯ ЭКРАНАМИ (без изменений) ---
-        function addNewScreen(defaultName = null) {
-            const screenName = prompt("Введите имя нового экрана:", defaultName || "Page-" + (screenList.children.length + 1));
-            if (!screenName) return; 
-            const screenId = 'screen-' + Date.now();
-            const newScreenDiv = document.createElement('div');
-            newScreenDiv.className = 'screen';
-            newScreenDiv.id = screenId;
-            newScreenDiv.dataset.screenName = screenName;
-            newScreenDiv.style.backgroundColor = '#fafafa';
-            canvasWrapper.style.backgroundColor = '#fafafa';
+    <!-- 7. OSINT SCANNER -->
+    <div id="osint-tool" class="screen">
+        <button class="back-btn-abs" onclick="showDashboard()">« МЕНЮ</button>
+        <div class="module-container">
+            <h1 style="text-align:center;">👁️ OSINT ИНСТРУМЕНТЫ</h1>
+            <div class="action-bar">
+                <select id="osintType" style="width:150px;" onchange="updateOsintPlaceholder()">
+                    <option value="ip">ПОИСК IP</option>
+                    <option value="port">ПРОВЕРКА ПОРТА</option>
+                    <option value="phone">ТЕЛЕФОН</option>
+                    <option value="email">ПРОВЕРКА ПОЧТЫ</option>
+                    <option value="whois">WHOIS ДОМЕНА</option>
+                </select>
+                <input type="text" id="osintInput" placeholder="Введите IP..." style="flex-grow:1;">
+                <button onclick="startOsintScan()" style="width:100px; cursor:pointer;">ПОИСК</button>
+            </div>
+            <div id="osint-result" class="result-box">Ожидание ввода данных...</div>
+        </div>
+    </div>
 
-            canvasWrapper.appendChild(newScreenDiv);
-            const newScreenLi = document.createElement('li');
-            newScreenLi.className = 'screen-item';
-            newScreenLi.dataset.screenId = screenId;
-            newScreenLi.textContent = screenName;
-            newScreenLi.addEventListener('click', () => { switchScreen(screenId); });
-            screenList.appendChild(newScreenLi);
-            switchScreen(screenId);
+    <!-- 8. PASSWORD AUDITOR -->
+    <div id="pass-tool" class="screen">
+        <button class="back-btn-abs" onclick="showDashboard()">« МЕНЮ</button>
+        <div class="module-container">
+            <h1 style="text-align:center;">🔐 АУДИТ ПАРОЛЕЙ</h1>
+            <div class="action-bar">
+                <input type="text" id="passInput" placeholder="Введите пароль для проверки..." style="flex-grow:1;">
+                <button onclick="checkPass()" style="width:100px; cursor:pointer;">АУДИТ</button>
+                <button onclick="genPass()" style="width:120px; cursor:pointer; border-color:orange; color:orange;">ГЕНЕРИРОВАТЬ</button>
+            </div>
+            <div id="pass-result" class="result-box">Введите пароль или нажмите Генерировать.</div>
+        </div>
+    </div>
+
+    <!-- 9. EXIF SPY -->
+    <div id="exif-tool" class="screen">
+        <button class="back-btn-abs" onclick="showDashboard()">« МЕНЮ</button>
+        <div class="module-container">
+            <h1 style="text-align:center;">📸 EXIF ШПИОН</h1>
+            <div style="text-align:center; margin-bottom:15px;">
+                <input type="file" id="exifInput" accept="image/*" style="width:100%;">
+            </div>
+            <div id="exif-result" class="result-box">Загрузите изображение (JPG/TIFF) для извлечения скрытых данных...</div>
+        </div>
+    </div>
+
+    <!-- 10. CRYPTO STATION -->
+    <div id="crypto-tool" class="screen">
+        <button class="back-btn-abs" onclick="showDashboard()">« МЕНЮ</button>
+        <div class="module-container">
+            <h1 style="text-align:center;">🔓 КРИПТО СТАНЦИЯ</h1>
+            <div class="action-bar">
+                <select id="cryptoType" style="width:150px;">
+                    <option value="base64">Base64</option>
+                    <option value="binary">Бинарный (01)</option>
+                    <option value="hex">HEX (16-ричный)</option>
+                    <option value="caesar">Цезарь (+3)</option>
+                    <option value="reverse">Реверс (Задом наперед)</option>
+                </select>
+                <button onclick="doCrypto('enc')" style="flex-grow:1; cursor:pointer;">ЗАШИФРОВАТЬ</button>
+                <button onclick="doCrypto('dec')" style="flex-grow:1; cursor:pointer; border-color:orange; color:orange;">РАСШИФРОВАТЬ</button>
+            </div>
+            <textarea id="cryptoInput" placeholder="Введите текст..." style="width:100%; height:100px; background:#000; border:1px solid #333; color:#00ff00; padding:10px; box-sizing:border-box; margin-bottom:10px;"></textarea>
+            <div id="crypto-result" class="result-box" style="min-height:50px;">Результат...</div>
+        </div>
+    </div>
+
+    <!-- ВЕРДИКТ & ЛЕНТА -->
+    <div id="verdict" class="verdict-modal">
+        <div class="v-title-text">ОТЧЕТ</div>
+        <div id="v-score" class="v-score">ЧИСТО</div>
+        <div id="v-desc">Угроз не обнаружено.</div>
+        <div id="v-details" class="v-details-box"><ul id="v-list" style="list-style:none; padding:0;"></ul></div>
+        <button onclick="document.getElementById('verdict').style.display='none'" style="background:none; border:1px solid #fff; color:#fff; padding:5px 20px; cursor:pointer;">ЗАКРЫТЬ</button>
+    </div>
+    <div class="feed-panel" id="feedPanel">
+        <div style="color:orange; margin-bottom:10px; font-weight:bold;">ГЛОБАЛЬНАЯ ЛЕНТА</div>
+        <div id="feed" style="overflow-y:auto; flex:1;">Загрузка...</div>
+        <button onclick="toggleFeed()" style="margin-top:10px; background:#333; color:#fff; border:none; padding:5px; cursor:pointer;">ЗАКРЫТЬ</button>
+    </div>
+
+    <!-- ЛОГИКА -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getDatabase, ref, set, push, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDYQgJa7rlB_CAB4ywufavumzZrsS_pqNc",
+            authDomain: "antivirus-1f569.firebaseapp.com",
+            databaseURL: "https://antivirus-1f569-default-rtdb.firebaseio.com",
+            projectId: "antivirus-1f569",
+            storageBucket: "antivirus-1f569.firebasestorage.app",
+            messagingSenderId: "780704862578",
+            appId: "1:780704862578:web:a3f4eafe292a00ace8cdeb"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+
+        let fileRawData = null, fileName = "", fileLines = [], currentUserSub = 'default';
+        let bgImageBase64 = ""; // Для сохранения фона в HTML
+
+        // --- UI ---
+        window.showScreen = (id) => {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        window.openTool = (tool) => {
+            const perms = { 'virus':['default','Auto','Full'], 'rick':['default','Auto','Full'], 'pass':['default','Auto','Full'], 'maker':['Auto','Full'], 'editor':['Auto','Full'], 'osint':['Auto','Full'], 'exif':['Full'], 'crypto':['Full'] };
+            if (tool !== 'maker' && !perms[tool].includes(currentUserSub)) { alert("ДОСТУП ЗАПРЕЩЕН! Требуется повышение уровня подписки."); return; }
+            if(tool === 'maker') return;
+            const loader = document.getElementById('loading-overlay');
+            const msg = document.getElementById('loading-msg');
+            const msgs = { virus:"ЗАГРУЗКА АНТИВИРУСА...", rick:"ЗАГРУЗКА АНТИ-ТРОЛЛА...", maker:"ЗАГРУЗКА КОНСТРУКТОРА...", osint:"ЗАГРУЗКА OSINT...", pass:"ЗАГРУЗКА АУДИТА...", exif:"ЗАГРУЗКА EXIF...", crypto:"ЗАГРУЗКА КРИПТО...", editor:"ЗАГРУЗКА РЕДАКТОРА..." };
+            msg.innerText = msgs[tool] || "ЗАГРУЗКА...";
+            loader.style.display = 'flex'; void loader.offsetWidth; loader.style.opacity = '1';
+            setTimeout(() => {
+                if(tool === 'virus') window.showScreen('virus-tool');
+                if(tool === 'rick') window.showScreen('rick-tool');
+                if(tool === 'editor') window.showScreen('editor-tool');
+                if(tool === 'osint') window.showScreen('osint-tool');
+                if(tool === 'pass') window.showScreen('pass-tool');
+                if(tool === 'exif') window.showScreen('exif-tool');
+                if(tool === 'crypto') window.showScreen('crypto-tool');
+                loader.style.opacity = '0';
+                setTimeout(() => { loader.style.display = 'none'; }, 500);
+            }, 2500);
+        }
+        window.showDashboard = () => window.showScreen('dashboard-screen');
+        window.toggleFeed = () => document.getElementById('feedPanel').classList.toggle('open');
+        window.doLogout = () => signOut(auth);
+
+        // --- AUTH ---
+        onAuthStateChanged(auth, (user) => {
+            if(user) {
+                window.showScreen('dashboard-screen');
+                document.getElementById('user-display').innerText = user.email;
+                onValue(ref(db, 'Users/'+user.uid), (s) => {
+                    const sub = (s.val() && s.val().Subscribe) ? s.val().Subscribe : 'default';
+                    currentUserSub = sub;
+                    const oA = document.querySelector('option[value="auto"]'), oF = document.querySelector('option[value="full"]');
+                    oA.disabled=true; oA.innerText="Авто [ЗАКРЫТО]"; oF.disabled=true; oF.innerText="Полное [ЗАКРЫТО]";
+                    if(sub==='Auto'||sub==='Full') { oA.disabled=false; oA.innerText="Авто"; }
+                    if(sub==='Full') { oF.disabled=false; oF.innerText="Полное"; }
+                    updateVirusAccess(sub); updateHubLocks(sub);
+                });
+                listenFeed();
+                if(localStorage.getItem('secure_pad')) document.getElementById('securePad').value = localStorage.getItem('secure_pad');
+            } else window.showScreen('auth-screen');
+        });
+        
+        function updateHubLocks(sub) {
+            const cards = { 'virus':'card-virus', 'rick':'card-rick', 'pass':'card-pass', 'maker':'card-maker', 'editor':'card-editor', 'osint':'card-osint', 'exif':'card-exif', 'crypto':'card-crypto' };
+            for (let k in cards) if(document.getElementById(cards[k])) document.getElementById(cards[k]).classList.remove('locked');
+            if (sub === 'default') { ['editor', 'osint', 'exif', 'crypto'].forEach(k => document.getElementById(cards[k]).classList.add('locked')); } 
+            else if (sub === 'Auto') { ['exif', 'crypto'].forEach(k => document.getElementById(cards[k]).classList.add('locked')); }
         }
         
-        function switchScreen(screenId) {
-            if (!screenId) return;
-            currentScreenId = screenId;
-            const activeScreen = document.getElementById(screenId);
-            if (activeScreen) {
-                canvasWrapper.style.backgroundColor = activeScreen.style.backgroundColor || '#fafafa';
+        function updateVirusAccess(sub) {
+            const select = document.getElementById('targetType'); const opts = select.options;
+            const allowedDefault = ['bat']; const allowedAuto = ['bat', 'py', 'vbs', 'ps1'];
+            for(let i=0; i<opts.length; i++) {
+                let val = opts[i].value; let label = opts[i].text.replace(/ \[LOCK\]/g, '');
+                let disabled = true;
+                if(sub === 'Full') disabled = false;
+                else if(sub === 'Auto' && allowedAuto.includes(val)) disabled = false;
+                else if(sub === 'default' && allowedDefault.includes(val)) disabled = false;
+                opts[i].disabled = disabled; opts[i].text = label + (disabled ? " [LOCK]" : "");
             }
-            canvasWrapper.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-            screenList.querySelectorAll('.screen-item').forEach(li => li.classList.remove('active'));
-            screenList.querySelector(`.screen-item[data-screen-id="${screenId}"]`).classList.add('active');
-            clearSelectionAndShowScreenProps();
-        }
-        addScreenBtn.addEventListener('click', () => addNewScreen());
-        
-        // --- ЛОГИКА МОДАЛЬНОГО ОКНА (без изменений) ---
-        addScreenBtnQuick.addEventListener('click', () => {
-            templateModal.style.display = 'flex'; 
-        });
-        modalCloseBtn.addEventListener('click', () => {
-            templateModal.style.display = 'none'; 
-        });
-        modalSubmitBtn.addEventListener('click', () => {
-            const command = templateCommandInput.value.trim().toLowerCase();
-            if (command === 'import lib calculator') {
-                importCalculatorElements();
-                templateCommandInput.value = '';
-                templateModal.style.display = 'none';
-            } else {
-                alert("Неизвестная команда!");
-            }
-        });
-        templateModal.addEventListener('click', (e) => {
-            if (e.target.id === 'template-modal') {
-                templateModal.style.display = 'none';
-            }
-        });
-        
-        addNewScreen("Page-1");
-
-
-        // --- ЛОГИКА ПЕРЕТАСКИВАНИЯ (Drag & Drop) (без изменений) ---
-        
-        tools.forEach(tool => {
-            tool.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', e.target.dataset.type); 
-            });
-        });
-        canvasWrapper.addEventListener('dragover', (e) => { 
-            e.preventDefault(); 
-            e.dataTransfer.dropEffect = 'copy'; 
-            canvasWrapper.classList.add('drag-over'); 
-        });
-        canvasWrapper.addEventListener('dragleave', () => { 
-            canvasWrapper.classList.remove('drag-over'); 
-        });
-        
-        canvasWrapper.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation(); 
-            canvasWrapper.classList.remove('drag-over');
-            
-            const type = e.dataTransfer.getData('text/plain'); 
-            if (!type || !currentScreenId) return; 
-            
-            const activeScreen = document.getElementById(currentScreenId);
-            if (!activeScreen) return;
-
-            const newElement = createElement(type); 
-            if (newElement) {
-                const canvasRect = canvasWrapper.getBoundingClientRect();
-                const scrollTop = activeScreen.scrollTop;
-                const scrollLeft = activeScreen.scrollLeft;
-
-                let x = e.clientX - canvasRect.left + scrollLeft;
-                let y = e.clientY - canvasRect.top + scrollTop;
-
-                newElement.style.position = 'absolute';
-                newElement.style.left = `${x}px`;
-                newElement.style.top = `${y}px`;
-                
-                activeScreen.appendChild(newElement); 
-                
-                if (!elementCounters[type]) elementCounters[type] = 0;
-                elementCounters[type]++;
-                const typeName = getRussianTypeName(type);
-                newElement.dataset.elementName = `${typeName} ${elementCounters[type]}`;
-                
-                selectElement(newElement, e); 
-            }
-        });
-        
-        function getRussianTypeName(type) {
-            const names = { h1: 'Заголовок', p: 'Параграф', img: 'Картинка', button: 'Кнопка', input: 'Поле ввода', div: 'Контейнер' };
-            return names[type] || 'Элемент';
-        }
-        
-        function createElement(type) {
-            let el;
-            if (type === 'h1') { el = document.createElement('h1'); el.textContent = 'Новый заголовок'; }
-            else if (type === 'p') { el = document.createElement('p'); el.textContent = 'Новый параграф.'; }
-            else if (type === 'img') { 
-                el = document.createElement('img'); 
-                el.src = 'https://placehold.co/600x400/eee/ccc?text=Image'; 
-                el.alt = 'Placeholder';
-                el.style.display = 'block'; 
-            }
-            else if (type === 'button') { el = document.createElement('button'); el.textContent = 'Нажми меня'; }
-            else if (type === 'input') { 
-                el = document.createElement('input'); 
-                el.type = 'text'; 
-                el.placeholder = 'Введите текст...'; 
-                el.style.width = '160px'; 
-            }
-            else if (type === 'div') { 
-                el = document.createElement('div'); 
-                el.style.border = '1px dashed #999'; 
-                el.style.minHeight = '50px'; 
-                el.style.padding = '10px';
-                el.style.display = 'flex';
-                el.style.flexDirection = 'column';
-                el.style.width = '200px'; 
-            }
-            
-            if (el) { 
-                el.id = 'el-' + Date.now();
-                el.addEventListener('mousedown', (e) => onElementMouseDown(e, el));
-            }
-            return el;
-        }
-        
-        canvasWrapper.addEventListener('click', (e) => {
-            if (e.target.id === 'canvas-wrapper' || e.target.classList.contains('screen')) {
-                 clearSelectionAndShowScreenProps();
-            }
-        });
-
-
-        // --- ФУНКЦИЯ ИМПОРТА КАЛЬКУЛЯТОРА (без изменений) ---
-        function importCalculatorElements() {
-            const activeScreen = document.getElementById(currentScreenId);
-            if (!activeScreen) {
-                alert("Сначала выберите экран!");
-                return;
-            }
-
-            const groupID = 'calc-group-' + Date.now();
-            if (!elementCounters['calculator']) elementCounters['calculator'] = 0;
-            elementCounters['calculator']++;
-            const calcNum = elementCounters['calculator'];
-
-            // 1. Контейнер
-            const containerDiv = document.createElement('div');
-            containerDiv.id = 'el-' + Date.now() + '-container';
-            containerDiv.dataset.elementName = `Кальк ${calcNum} Контейнер`;
-            
-            containerDiv.addEventListener('mousedown', (e) => onElementMouseDown(e, containerDiv));
-            
-            containerDiv.style.position = 'absolute';
-            containerDiv.style.left = '20px';
-            containerDiv.style.top = '20px';
-            containerDiv.style.display = 'grid';
-            containerDiv.style.gridTemplateColumns = 'repeat(4, 1fr)';
-            containerDiv.style.gap = '10px';
-            containerDiv.style.width = '250px'; 
-            containerDiv.style.padding = '10px';
-            containerDiv.style.border = '1px solid #ccc'; 
-            containerDiv.style.backgroundColor = '#f0f0f0'; 
-            containerDiv.style.borderRadius = '8px';
-            containerDiv.style.boxSizing = 'border-box'; 
-
-            // 2. Дисплей
-            const calcDisplay = document.createElement('input');
-            calcDisplay.type = 'text';
-            calcDisplay.readOnly = true;
-            calcDisplay.id = 'el-' + Date.now() + '-display';
-            calcDisplay.dataset.elementName = `Кальк ${calcNum} Дисплей`;
-            calcDisplay.dataset.calcGroup = groupID;
-            calcDisplay.dataset.calcRole = 'display';
-            
-            calcDisplay.addEventListener('mousedown', (e) => onElementMouseDown(e, calcDisplay));
-
-            calcDisplay.style.position = 'relative'; 
-            calcDisplay.style.gridColumn = '1 / -1'; 
-            calcDisplay.style.width = '100%'; 
-            calcDisplay.style.boxSizing = 'border-box'; 
-            calcDisplay.style.padding = '10px';
-            calcDisplay.style.fontSize = '24px';
-            calcDisplay.style.textAlign = 'right';
-            calcDisplay.style.border = '1px solid #ddd';
-            calcDisplay.style.borderRadius = '4px';
-            calcDisplay.style.margin = '0'; 
-            calcDisplay.style.cursor = 'grab'; 
-
-            containerDiv.appendChild(calcDisplay);
-
-            // 3. Кнопки
-            const buttons = [
-                '7', '8', '9', '/', 
-                '4', '5', '6', '*',
-                '1', '2', '3', '-',
-                '0', '.', '=', '+',
-                'C'
-            ];
-
-            buttons.forEach(label => {
-                const btn = document.createElement('button');
-                btn.id = 'el-' + Date.now() + '-' + label;
-                btn.dataset.elementName = `Кальк ${calcNum} Кнопка ${label}`;
-                btn.dataset.calcGroup = groupID;
-                btn.dataset.calcRole = 'button';
-                btn.textContent = label;
-                
-                btn.addEventListener('mousedown', (e) => onElementMouseDown(e, btn));
-                
-                btn.style.position = 'relative'; 
-                btn.style.padding = '15px 0'; 
-                btn.style.fontSize = '18px';
-                btn.style.border = 'none';
-                btn.style.borderRadius = '6px';
-                btn.style.cursor = 'grab'; 
-                btn.style.backgroundColor = '#e0e0e0';
-                btn.style.color = '#333';
-                btn.style.margin = '0'; 
-                btn.style.textAlign = 'center'; 
-                
-                if (label === '=') {
-                    btn.style.gridColumn = 'span 2'; 
-                    btn.style.backgroundColor = '#007bff';
-                    btn.style.color = 'white';
-                }
-                else if (label === 'C') {
-                    btn.style.gridColumn = 'span 2'; 
-                    btn.style.backgroundColor = '#dc3545';
-                    btn.style.color = 'white';
-                }
-                else if ('/*-+'.includes(label)) {
-                    btn.style.backgroundColor = '#f0ad4e';
-                    btn.style.color = 'white';
-                }
-
-                containerDiv.appendChild(btn);
-            });
-            
-            activeScreen.appendChild(containerDiv);
-            selectElement(containerDiv, new MouseEvent('click')); 
+            if(select.selectedOptions[0].disabled) select.value = 'bat';
         }
 
-        // --- ЛОГИКА MOUSE DOWN/MOVE/UP (без изменений) ---
-        
-        function onElementMouseDown(e, element) {
-            e.stopPropagation();
-            
-            if ((e.target.tagName === 'INPUT' && !e.target.readOnly) || 
-                (e.target.tagName === 'TEXTAREA')) {
-                selectElement(element, e); 
-                return; 
-            }
-            
-            e.preventDefault(); 
-            
-            selectElement(element, e);
-            
-            isDragging = true;
-            dragOffsets.clear();
-
-            selectedElements.forEach(el => {
-                el.classList.add('dragging');
-                
-                dragOffsets.set(el, {
-                    x: e.clientX - parseFloat(el.style.left || 0),
-                    y: e.clientY - parseFloat(el.style.top || 0)
+        document.getElementById('btnLogin').onclick = () => signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value).catch(e=>alert("Ошибка входа"));
+        document.getElementById('btnRegister').onclick = () => createUserWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value).then(c=>set(ref(db,'Users/'+c.user.uid),{email:c.user.email,Subscribe:"default"})).catch(e=>alert(e.message));
+        function listenFeed() {
+            onValue(ref(db, 'scans'), (s) => {
+                const f = document.getElementById('feed'); f.innerHTML=""; const d=s.val(); if(!d)return;
+                Object.values(d).reverse().slice(0,15).forEach(i=>{
+                    let c="clean"; if(i.score>=3)c="critical"; else if(i.score==2)c="dangerous"; else if(i.score==1)c="suspicious";
+                    let sRu = i.status === "CLEAN" ? "ЧИСТО" : i.status === "INFECTED" ? "КРИТИЧНО" : i.status;
+                    f.innerHTML+=`<div class="feed-item ${c}"><b>${i.filename}</b><br>${sRu}</div>`;
                 });
             });
-
-            document.addEventListener('mousemove', onDocumentMouseMove);
-            document.addEventListener('mouseup', onDocumentMouseUp);
         }
 
-        function onDocumentMouseMove(e) {
-            if (!isDragging) return;
-
-            selectedElements.forEach(el => {
-                const offset = dragOffsets.get(el);
-                if (!offset) return;
-
-                let newLeft = e.clientX - offset.x;
-                let newTop = e.clientY - offset.y;
-
-                el.style.left = `${newLeft}px`;
-                el.style.top = `${newTop}px`;
-            });
-            
-            updatePropertiesPanelFromState();
-        }
-
-        function onDocumentMouseUp(e) {
-            isDragging = false;
-            dragOffsets.clear();
-            selectedElements.forEach(el => el.classList.remove('dragging'));
-            
-            document.removeEventListener('mousemove', onDocumentMouseMove);
-            document.removeEventListener('mouseup', onDocumentMouseUp);
-            
-            updatePropertiesPanelFromState();
-        }
-
-        // --- ЛОГИКА ВЫДЕЛЕНИЯ И ПАНЕЛИ СВОЙСТВ (🚩 ИЗМЕНЕНИЕ) ---
+        // --- EDITOR LOGIC (UPDATED) ---
+        document.getElementById('securePad').addEventListener('input', (e) => localStorage.setItem('secure_pad', e.target.value));
         
-        function deselectAllElements() {
-            selectedElements.forEach(el => el.classList.remove('selected'));
-            selectedElements = [];
-        }
-
-        function selectElement(element, e) {
-            if (!e.ctrlKey) {
-                if (!selectedElements.includes(element)) {
-                    deselectAllElements();
-                    selectedElements.push(element);
-                    element.classList.add('selected');
-                }
-            } else {
-                if (selectedElements.includes(element)) {
-                    element.classList.remove('selected');
-                    selectedElements = selectedElements.filter(el => el !== element);
-                } else {
-                    selectedElements.push(element);
-                    element.classList.add('selected');
-                }
-            }
-            showProperties();
+        window.applyPresetColor = () => {
+            const color = document.getElementById('edColorPreset').value;
+            document.getElementById('securePad').style.color = color;
         }
         
-        function clearSelectionAndShowScreenProps() {
-            deselectAllElements();
-            propsTabsContainer.style.display = 'none'; 
-            propsActions.innerHTML = ''; 
-            propsContent.innerHTML = '';
-            propsPlaceholder.style.display = 'none';
-            buildScreenProperties(); 
+        window.applyCustomColor = () => {
+            const color = document.getElementById('edCustomColor').value;
+            document.getElementById('securePad').style.color = color;
+        }
+
+        window.updateEditorStyle = () => {
+            const pad = document.getElementById('securePad');
+            pad.style.fontFamily = document.getElementById('edFont').value;
+            pad.style.fontSize = document.getElementById('edSize').value + 'px';
+            pad.style.backgroundColor = document.getElementById('edBgColor').value;
         }
         
-        // 🚩 ИСПРАВЛЕНИЕ ЗДЕСЬ
-        function showProperties() {
-            if (selectedElements.length === 0) {
-                clearSelectionAndShowScreenProps();
-            } else {
-                const lastSelected = selectedElements[selectedElements.length - 1];
-                
-                propsPlaceholder.style.display = 'none';
-                propsContent.innerHTML = ''; 
-                propsActions.innerHTML = ''; 
-                propsTabsContainer.style.display = 'flex'; 
-                
-                // 🚩 УДАЛЕНА СТРОКА, КОТОРАЯ СБРАСЫВАЛА ВКЛАДКУ
-                // propsTabsContainer.querySelector('[data-tab="props-content"]').click(); 
-                
-                buildPropertiesPanel(lastSelected); 
-                buildActionsPanel(lastSelected);
-            }
-        }
-        
-        function updatePropertiesPanelFromState() {
-            if (selectedElements.length !== 1) return; 
-            
-            const el = selectedElements[0];
-            const topInput = document.getElementById('prop-top--px-');
-            const leftInput = document.getElementById('prop-left--px-');
-            
-            if (topInput) topInput.value = parseFloat(el.style.top || 0).toFixed(0);
-            if (leftInput) leftInput.value = parseFloat(el.style.left || 0).toFixed(0);
-        }
-
-        function buildScreenProperties() {
-            const screen = document.getElementById(currentScreenId);
-            if (!screen) return;
-            propsContent.innerHTML = '';
-            const title = document.createElement('h3');
-            title.textContent = 'Настройки Экрана';
-            title.style.marginTop = 0;
-            propsContent.appendChild(title);
-            createPropertyInput('Цвет фона:', 'color', screen.style.backgroundColor || '#fafafa', (value) => { 
-                screen.style.backgroundColor = value; 
-                canvasWrapper.style.backgroundColor = value;
-            });
-        }
-        
-        function buildPropertiesPanel(element) {
-            createPropertyInput('Имя (для действий):', 'text', element.dataset.elementName || '', (value) => {
-                element.dataset.elementName = value;
-                buildActionsPanel(element);
-            });
-            
-            if (element.style.position !== 'relative') {
-                createPropertyInput('Top (px):', 'number', parseFloat(element.style.top || 0).toFixed(0), (value) => { 
-                    element.style.top = `${value}px`; 
-                });
-                createPropertyInput('Left (px):', 'number', parseFloat(element.style.left || 0).toFixed(0), (value) => { 
-                    element.style.left = `${value}px`; 
-                });
-            }
-            
-            if (['H1', 'P', 'BUTTON', 'DIV'].includes(element.tagName)) {
-                 createPropertyInput('Текст:', 'textarea', element.textContent, (value) => { element.textContent = value; });
-            }
-             if (element.tagName === 'INPUT') {
-                createPropertyInput('Заглушка (placeholder):', 'text', element.placeholder, (value) => { element.placeholder = value; });
-                createPropertyInput('Значение (value):', 'text', element.value, (value) => { element.value = value; });
-            }
-            if (element.tagName === 'IMG') {
-                createPropertyInput('URL Картинки:', 'text', element.src, (value) => { element.src = value; });
-                createPropertyInput('Alt текст:', 'text', element.alt, (value) => { element.alt = value; });
-            }
-             if (['H1', 'P', 'BUTTON', 'DIV'].includes(element.tagName)) {
-                createPropertySelect('Позиция (текста):', [
-                        { value: 'left', text: 'Слева' },
-                        { value: 'center', text: 'По центру' },
-                        { value: 'right', text: 'Справа' }
-                ], element.style.textAlign || 'left', (value) => { element.style.textAlign = value; });
-             }
-            
-            if (element.tagName === 'DIV') {
-                createPropertySelect('Отображение (Display):', [
-                        { value: 'block', text: 'Блок' },
-                        { value: 'flex', text: 'Flex' },
-                        { value: 'grid', text: 'Grid (Сетка)' } 
-                 ], element.style.display || 'block', (value) => { element.style.display = value; });
-                
-                if (element.style.display === 'flex' || element.style.display === 'grid') {
-                    if (element.style.display === 'flex') {
-                        createPropertySelect('Направление (Flex Direction):', [
-                                { value: 'column', text: 'Вертикально (Столбец)' },
-                                { value: 'row', text: 'Горизонтально (Ряд)' }
-                        ], element.style.flexDirection || 'column', (value) => { element.style.flexDirection = value; });
-                    }
-
-                    if (element.style.display === 'grid') {
-                         createPropertyInput('Колонки (Grid Columns):', 'text', element.style.gridTemplateColumns || '1fr 1fr', (value) => { element.style.gridTemplateColumns = value; });
-                         createPropertyInput('Отступ (Gap):', 'text', element.style.gap || '10px', (value) => { element.style.gap = value; });
-                    }
-
-                    createPropertySelect('Выравнивание (Осн. ось):', [
-                            { value: 'flex-start', text: 'Начало' },
-                            { value: 'center', text: 'Центр' },
-                            { value: 'flex-end', text: 'Конец' },
-                            { value: 'space-between', text: 'По краям' },
-                            { value: 'space-around', text: 'С отступами' }
-                    ], element.style.justifyContent || 'flex-start', (value) => { element.style.justifyContent = value; });
-                    createPropertySelect('Выравнивание (Попер. ось):', [
-                            { value: 'stretch', text: 'Растянуть' },
-                            { value: 'flex-start', text: 'Начало' },
-                            { value: 'center', text: 'Центр' },
-                            { value: 'flex-end', text: 'Конец' }
-                    ], element.style.alignItems || 'stretch', (value) => { element.style.alignItems = value; });
-                }
-                 createPropertyInput('Граница (border):', 'text', element.style.border || '1px dashed #999', (value) => { element.style.border = value; });
-            }
-                
-            createPropertyInput('Цвет текста:', 'color', element.style.color || '#000000', (value) => { element.style.color = value; });
-            createPropertyInput('Ширина (px, %):', 'text', element.style.width || '', (value) => { element.style.width = value; });
-            createPropertyInput('Высота (px, %):', 'text', element.style.height || '', (value) => { element.style.height = value; });
-            createPropertyInput('Мин. Высота (px, %):', 'text', element.style.minHeight || '', (value) => { element.style.minHeight = value; });
-            createPropertyInput('Цвет фона:', 'color', element.style.backgroundColor || '#ffffff', (value) => { element.style.backgroundColor = value; });
-            
-            const deleteButton = document.createElement('button');
-            deleteButton.id = 'delete-btn';
-            deleteButton.textContent = 'Удалить элемент(ы)'; 
-            
-            deleteButton.addEventListener('click', () => { 
-                selectedElements.forEach(el => el.remove()); 
-                clearSelectionAndShowScreenProps(); 
-            });
-            propsContent.appendChild(deleteButton);
-        }
-
-        function createPropertyInput(label, type, initialValue, onUpdate) {
-            const group = document.createElement('div'); group.className = 'prop-group';
-            const labelEl = document.createElement('label'); labelEl.textContent = label;
-            let inputEl;
-            if (type === 'textarea') { inputEl = document.createElement('textarea'); }
-            else { inputEl = document.createElement('input'); inputEl.type = type; }
-            
-            inputEl.id = 'prop-' + label.toLowerCase().replace(/[^a-z0-9]/g, '-');
-            
-            inputEl.value = initialValue;
-            const eventType = (type === 'color' || type === 'select-one' || type === 'number') ? 'change' : 'input';
-            inputEl.addEventListener(eventType, (e) => { onUpdate(e.target.value); });
-            
-            if (type === 'number' || type === 'text') {
-                 inputEl.addEventListener('input', (e) => { onUpdate(e.target.value); });
-            }
-            
-            group.appendChild(labelEl); group.appendChild(inputEl);
-            propsContent.appendChild(group);
-        }
-        function createPropertySelect(label, options, initialValue, onUpdate) {
-             const group = document.createElement('div'); group.className = 'prop-group';
-            const labelEl = document.createElement('label'); labelEl.textContent = label;
-            const selectEl = document.createElement('select');
-            selectEl.id = 'prop-' + label.toLowerCase().replace(/[^a-z0-9]/g, '-');
-            options.forEach(opt => {
-                const optionEl = document.createElement('option');
-                optionEl.value = opt.value; optionEl.textContent = opt.text;
-                if (opt.value === initialValue) optionEl.selected = true;
-                selectEl.appendChild(optionEl);
-            });
-            selectEl.addEventListener('change', (e) => { onUpdate(e.target.value); });
-            group.appendChild(labelEl); group.appendChild(selectEl);
-            propsContent.appendChild(group);
-        }
-
-
-        // === 4. ЛОГИКА ПАНЕЛИ ДЕЙСТВИЙ (без изменений) ===
-        function buildActionsPanel(element) {
-            propsActions.innerHTML = '';
-            const actions = getElementActions(element);
-            actions.forEach(actionData => {
-                const actionBlock = createActionBlock(element, actionData);
-                propsActions.appendChild(actionBlock);
-            });
-            const addBtn = document.createElement('button');
-            addBtn.id = 'add-action-btn';
-            addBtn.textContent = '+ Добавить действие';
-            addBtn.onclick = () => {
-                const defaultActionData = {
-                    event: 'click',
-                    action: 'show',
-                    targetId: ''
+        window.uploadBgImage = () => {
+            const file = document.getElementById('edBgImageInput').files[0];
+            if(file){
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    bgImageBase64 = e.target.result;
+                    document.getElementById('securePad').style.backgroundImage = `url(${bgImageBase64})`;
                 };
-                const newBlock = createActionBlock(element, defaultActionData);
-                propsActions.insertBefore(newBlock, addBtn);
-                saveElementActions(element);
-            };
-            propsActions.appendChild(addBtn);
-        }
-        function createActionBlock(element, actionData) {
-            const block = document.createElement('div');
-            block.className = 'action-block';
-            const eventLabel = document.createElement('label');
-            eventLabel.textContent = 'Когда:';
-            const eventSelect = document.createElement('select');
-            eventSelect.innerHTML = `
-                <option value="click">При клике</option>
-                <option value="mouseover">При наведении</option>
-                <option value="mouseout">При отведении мыши</option>
-            `;
-            eventSelect.value = actionData.event || 'click';
-            const actionLabel = document.createElement('label');
-            actionLabel.textContent = 'Сделать:';
-            const actionSelect = document.createElement('select');
-            actionSelect.innerHTML = `
-                <option value="show">Показать</option>
-                <option value="hide">Скрыть</option>
-                <option value="goto">Перейти на экран</option>
-            `;
-            actionSelect.value = actionData.action || 'show';
-            const targetLabel = document.createElement('label');
-            targetLabel.textContent = 'Цель:';
-            const targetSelect = document.createElement('select');
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-action-btn';
-            deleteBtn.innerHTML = '&times;';
-            deleteBtn.onclick = () => {
-                block.remove();
-                saveElementActions(element);
-            };
-            const updateTargetOptions = () => {
-                const currentAction = actionSelect.value;
-                targetSelect.innerHTML = ''; 
-                if (currentAction === 'goto') {
-                    screenList.querySelectorAll('.screen-item').forEach(li => {
-                        const opt = document.createElement('option');
-                        opt.value = li.dataset.screenId;
-                        opt.textContent = li.textContent;
-                        targetSelect.appendChild(opt);
-                    });
-                } else {
-                    const currentScreen = document.getElementById(currentScreenId);
-                    currentScreen.querySelectorAll('*[id^="el-"]').forEach(el => {
-                        const opt = document.createElement('option');
-                        opt.value = el.id;
-                        if (el.id === element.id) {
-                            opt.textContent = `(Этот элемент) ${el.dataset.elementName || el.id}`;
-                        } else {
-                            opt.textContent = el.dataset.elementName || el.id;
-                        }
-                        targetSelect.appendChild(opt);
-                    });
-                }
-                targetSelect.value = actionData.targetId;
-            };
-            actionSelect.onchange = () => {
-                actionData.action = actionSelect.value;
-                updateTargetOptions();
-                saveElementActions(element);
-            };
-            eventSelect.onchange = () => saveElementActions(element);
-            targetSelect.onchange = () => saveElementActions(element);
-            block.appendChild(deleteBtn);
-            block.appendChild(eventLabel);
-            block.appendChild(eventSelect);
-            block.appendChild(actionLabel);
-            block.appendChild(actionSelect);
-            block.appendChild(targetLabel);
-            block.appendChild(targetSelect);
-            updateTargetOptions();
-            return block;
-        }
-        function saveElementActions(element) {
-            const allBlocks = propsActions.querySelectorAll('.action-block');
-            const actionsArray = [];
-            allBlocks.forEach(block => {
-                const eventSelect = block.querySelectorAll('select')[0];
-                const actionSelect = block.querySelectorAll('select')[1];
-                const targetSelect = block.querySelectorAll('select')[2];
-                if (targetSelect.value) {
-                    actionsArray.push({
-                        event: eventSelect.value,
-                        action: actionSelect.value,
-                        targetId: targetSelect.value
-                    });
-                }
-            });
-            element.dataset.actions = JSON.stringify(actionsArray);
-        }
-        function getElementActions(element) {
-            if (element.dataset.actions) {
-                try {
-                    return JSON.parse(element.dataset.actions);
-                } catch (e) {
-                    console.error("Ошибка чтения действий:", e);
-                    return [];
-                }
+                reader.readAsDataURL(file);
             }
-            return [];
-        }
-
-
-        // === 5. ЛОГИКА ЭКСПОРТА (без изменений) ===
-        exportBtn.addEventListener('click', () => {
-            clearSelectionAndShowScreenProps(); 
-            
-            const clone = canvasWrapper.cloneNode(true);
-            clone.querySelectorAll('*').forEach(el => {
-                el.classList.remove('selected');
-                if (el.dataset && el.dataset.elementName) {
-                     delete el.dataset.elementName;
-                }
-            });
-            const firstScreen = clone.querySelector('.screen');
-            if(firstScreen) {
-                firstScreen.classList.add('active');
-            }
-            
-            const bodyContent = clone.innerHTML;
-            
-            const runtimeScript = `
-<script>
-    // 1. Функции-действия (No-Code)
-    function runtimeShow(elementId) {
-        const el = document.getElementById(elementId);
-        if (el) { el.style.display = ''; }
-    }
-    function runtimeHide(elementId) {
-        const el = document.getElementById(elementId);
-        if (el) { el.style.display = 'none'; }
-    }
-    function runtimeGoto(screenId) {
-        document.querySelectorAll('.screen').forEach(screen => {
-            screen.style.display = 'none';
-        });
-        const screen = document.getElementById(screenId);
-        if (screen) {
-            screen.style.display = screen.dataset.originalDisplay || 'block';
-        }
-    }
-
-    // 2. Функция "Привязки" событий (No-Code)
-    function attachEventListeners() {
-        document.querySelectorAll('[data-actions]').forEach(element => {
-            try {
-                const actions = JSON.parse(element.dataset.actions);
-                actions.forEach(action => {
-                    element.addEventListener(action.event, (e) => {
-                        e.stopPropagation(); 
-                        switch (action.action) {
-                            case 'show': runtimeShow(action.targetId); break;
-                            case 'hide': runtimeHide(action.targetId); break;
-                            case 'goto': runtimeGoto(action.targetId); break;
-                        }
-                    });
-                });
-            } catch (e) {
-                console.error('Ошибка привязки действий:', e, element);
-            }
-        });
-    }
-
-    // 3. Логика Калькулятора (на основе ГРУПП)
-    function runtimeCalculator() {
-        const groupIDs = new Set();
-        document.querySelectorAll('[data-calc-group]').forEach(el => {
-            groupIDs.add(el.dataset.calcGroup);
-        });
-
-        groupIDs.forEach(groupID => {
-            const display = document.querySelector(\`[data-calc-group="\${groupID}"][data-calc-role="display"]\`);
-            const buttons = document.querySelectorAll(\`[data-calc-group="\${groupID}"][data-calc-role="button"]\`);
-            
-            if (!display || buttons.length === 0) {
-                console.error(\`Элементы калькулятора для группы \${groupID} не найдены.\`);
-                return; 
-            }
-
-            let currentInput = '';
-            let operator = '';
-            let previousInput = '';
-
-            buttons.forEach(button => {
-                button.addEventListener('click', (e) => {
-                    e.stopPropagation(); 
-                    
-                    const value = button.textContent; 
-
-                    if (!isNaN(parseFloat(value)) || value === '.') { 
-                        if (value === '.' && currentInput.includes('.')) return; 
-                        currentInput += value;
-                        display.value = currentInput;
-                    
-                    } else if (value.toLowerCase() === 'c' || value.toLowerCase() === 'с') { 
-                        currentInput = '';
-                        previousInput = '';
-                        operator = '';
-                        display.value = '';
-                    
-                    } else if (value === '=') { 
-                        if (currentInput && previousInput && operator) {
-                            try {
-                                currentInput = String(eval(previousInput + operator + currentInput));
-                                display.value = currentInput;
-                            } catch (e) {
-                                display.value = 'Error';
-                                currentInput = '';
-                            }
-                            previousInput = '';
-                            operator = '';
-                        }
-                    
-                    } else { 
-                        if (currentInput) {
-                            if (previousInput && operator) { 
-                                try {
-                                    previousInput = String(eval(previousInput + operator + currentInput));
-                                } catch (e) {
-                                    display.value = 'Error';
-                                    previousInput = '';
-                                    currentInput = '';
-                                    operator = '';
-                                    return;
-                                }
-                            } else {
-                                previousInput = currentInput;
-                            }
-                            operator = value;
-                            currentInput = '';
-                            display.value = previousInput; 
-                        } else if (previousInput) {
-                            operator = value; 
-                        }
-                    }
-                });
-            });
-        });
-    }
-
-    // 4. Запуск при загрузке
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.screen').forEach(screen => {
-            screen.dataset.originalDisplay = getComputedStyle(screen).display || 'block';
-        });
-        const firstScreen = document.querySelector('.screen.active');
-        if (firstScreen) {
-            runtimeGoto(firstScreen.id);
         }
         
-        attachEventListeners(); 
-        runtimeCalculator();  
-    });
-<\/script>
-            `;
-            
-            const runtimeStyle = `
-<style>
-    body { font-family: sans-serif; margin: 0; }
-    .screen { 
-        width: 100%; min-height: 100vh; 
-        box-sizing: border-box; 
-        position: relative; 
-    }
-    .screen > * { 
-        position: absolute; 
-        max-width: 100%; box-sizing: border-box; 
-        flex-shrink: 0;
-    }
-    .screen img {
-        display: block;
-    }
-    
-    button { padding: 10px 15px; font-size: 16px; cursor: pointer; }
-    img { max-width: 100%; height: auto; }
-    input { padding: 8px; font-size: 16px; }
-</style>
-            `;
+        window.clearBgImage = () => {
+            bgImageBase64 = "";
+            document.getElementById('securePad').style.backgroundImage = "none";
+            document.getElementById('edBgImageInput').value = "";
+        }
 
-            const finalHtml = `
+        window.toggleGlow = () => document.getElementById('securePad').classList.toggle('glow-text');
+        window.downloadTxt = () => {
+            const blob = new Blob([document.getElementById('securePad').value], {type: "text/plain;charset=utf-8"});
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "secure_note.txt"; a.click();
+        }
+        window.downloadHtml = () => {
+            const text = document.getElementById('securePad').value;
+            const color = document.getElementById('securePad').style.color || '#00ff00';
+            const bgColor = document.getElementById('securePad').style.backgroundColor || '#000000';
+            const font = document.getElementById('edFont').value;
+            const size = document.getElementById('edSize').value;
+            const isGlow = document.getElementById('securePad').classList.contains('glow-text');
+            const glowStyle = isGlow ? "text-shadow: 0 0 5px currentColor;" : "";
+            
+            // Если есть картинка, вставляем её
+            const bgStyle = bgImageBase64 ? `background-image: url(${bgImageBase64}); background-size: cover; background-position: center;` : `background-color: ${bgColor};`;
+
+            const htmlContent = `
 <!DOCTYPE html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мое Приложение</title>
-    ${runtimeStyle}
-</head>
-<body>
-    ${bodyContent}
-    ${runtimeScript}
-</body>
-</html>
-            `;
+<head><meta charset="UTF-8"><title>Secure Note</title>
+<style>body{margin:0;padding:20px;height:100vh;box-sizing:border-box; ${bgStyle} color:${color}; font-family:${font}; font-size:${size}px; ${glowStyle} white-space:pre-wrap; word-wrap:break-word;}</style>
+</head><body>${text}</body></html>`;
+
+            const blob = new Blob([htmlContent], {type: "text/html;charset=utf-8"});
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "secure_note.html"; a.click();
+        }
+
+        // --- 1. VIRUS HUNTER ---
+        const batRules=[{regex:/del\s|erase\s/i,msg:"УДАЛЕНИЕ ФАЙЛА",level:1},{regex:/shutdown/i,msg:"ВЫКЛЮЧЕНИЕ",level:1},{regex:/format\s/i,msg:"ФОРМАТИРОВАНИЕ",level:3},{regex:/reg\s+add/i,msg:"ИЗМЕНЕНИЕ РЕЕСТРА",level:3},{regex:/%0/i,msg:"FORK-БОМБА",level:2}];
+        const pyRules=[{regex:/os\.remove/i,msg:"PY: УДАЛЕНИЕ",level:1},{regex:/ctypes/i,msg:"ВИНЛОКЕР",level:3},{regex:/pynput/i,msg:"КЕЙЛОГГЕР",level:3}];
+        const exeRules=[{regex:/ShellExecute/i,msg:"API: CMD",level:1},{regex:/RegSetValue/i,msg:"API: РЕЕСТР",level:3},{regex:/GetAsyncKeyState/i,msg:"API: ПЕРЕХВАТ",level:3}];
+        const vbsRules=[{regex:/WScript\.Shell/i,msg:"VBS: SHELL",level:1},{regex:/AutoOpen/i,msg:"VBS: МАКРОС",level:2}];
+        
+        document.getElementById('fileInput').onchange=(e)=>{const f=e.target.files[0];if(f){fileName=f.name;fileRawData=f;const t=document.getElementById('targetType').value;const r=new FileReader();r.onload=(ev)=>{fileLines=ev.target.result.split('\n');document.getElementById('btnScan').disabled=false;log(`Файл загружен: ${fileName}`);};if(['exe','jar','zip'].includes(t)||fileName.endsWith('.exe')||fileName.endsWith('.zip'))r.readAsText(f,'ISO-8859-1');else r.readAsText(f,'CP866');}};
+        function log(t,c=""){const term=document.getElementById('terminal');term.innerHTML+=`<div class="log-line ${c}">> ${t}</div>`;term.scrollTop=term.scrollHeight;}
+
+        window.startScanLogic=async()=>{
+            const m=document.getElementById('scanMode').value; const t=document.getElementById('targetType').value;
+            document.getElementById('btnScan').disabled=true; document.getElementById('terminal').innerHTML=""; log(`СКАНИРОВАНИЕ [${m}]...`);
+            let maxL=0; let fT=[]; let rules=batRules; if(t==='py')rules=pyRules; if(t==='exe')rules=exeRules; if(t==='vbs')rules=vbsRules;
+            if(t==='zip'||fileName.endsWith('.zip')){try{const z=new JSZip();const c=await z.loadAsync(fileRawData);for(const[p,e]of Object.entries(c.files)){if(e.dir)continue;log(`ZIP: ${p}`,"zip-entry");if(p.endsWith('.bat')){const txt=await e.async("string");if(txt.includes("del ")){maxL=3;fT.push({msg:`ВИРУС В ZIP: ${p}`,level:3});}}}finish(maxL,m,fT);}catch(e){log("ОШИБКА ZIP","danger");finish(0,m,[]);}return;}
+            if(t==='exe'||t==='jar'){const r=new FileReader();r.onload=(e)=>{const txt=e.target.result;if(txt.includes("ShellExecute")||txt.includes("cmd.exe")){maxL=2;fT.push({msg:"ПОДОЗРИТЕЛЬНЫЕ СТРОКИ",level:2});}finish(maxL,m,fT);};r.readAsText(fileRawData,'ISO-8859-1');return;}
+            let i=0;function step(){if(i>=fileLines.length){finish(maxL,m,fT);return;}let l=fileLines[i].trim();if(m==='full'&&(t==='bat'||t==='vbs')&&l.includes('^')){l=l.replaceAll('^','');if(Math.random()>0.9)log("ДЕШИФРОВКА...","decrypt");}if(l.length>3&&!l.startsWith('rem')){for(const r of rules){if(r.regex.test(l)){if(r.level>maxL)maxL=r.level;fT.push({msg:r.msg,level:r.level});log(`ОБНАРУЖЕНО: ${r.msg}`,`level-${r.level}`);break;}}}i++;setTimeout(step,2);}step();
+        };
+        function finish(l,m,t){
+            document.getElementById('btnScan').disabled=false; let s="ЧИСТО",c="lime";
+            if(l===1){s="ПОДОЗРИТЕЛЬНО";c="yellow";}if(l===2){s="ОПАСНО";c="orange";}if(l===3){s="КРИТИЧНО";c="red";}
+            log(`РЕЗУЛЬТАТ: ${s}`, "sys");
+            const v=document.getElementById('verdict');v.style.display='block';v.style.borderColor=c;document.getElementById('v-score').innerText=s;document.getElementById('v-score').style.color=c;const lst=document.getElementById('v-list');lst.innerHTML="";
+            if(l>0){document.getElementById('v-details').style.display='block';[...new Set(t.map(x=>JSON.stringify(x)))].map(x=>JSON.parse(x)).forEach(x=>lst.innerHTML+=`<li style="color:${x.level==3?'red':'orange'}">• ${x.msg}</li>`);}else document.getElementById('v-details').style.display='none';
+            push(ref(db,'scans'),{filename:fileName,score:l,status:s,mode:m,user:document.getElementById('user-display').innerText,timestamp:Date.now()});
+        }
+
+        // --- 2. RICKROLL ---
+        const rickIds=["dQw4w9WgXcQ","xvFZjo5PgG0"];const rickDomains=["tomorrowtides.com"];const rickKeywords=["rick","рик","ролл","трол","отправь"];
+        window.startRickScan=async()=>{const a=document.getElementById("rickPlayer");if(a.paused){a.volume=0.3;a.play().catch(()=>{});}const u=document.getElementById('urlInput').value.trim();if(!u)return;const r=document.getElementById('rick-result');r.style.display='block';r.innerHTML='<span class="loader"></span> Сканирование...';await new Promise(res=>setTimeout(res,1500));let id=null;const m=u.match(/^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?)|(shorts\/))\??v?=?([^#&?]*).*/);if(m&&m[8].length==11)id=m[8];if(id&&rickIds.includes(id)){showRickResult("DANGER","ЭТО РИКРОЛЛ!","ID совпал.");return;}for(let d of rickDomains){if(u.includes(d)){showRickResult("DANGER","ФЕЙКОВЫЙ САЙТ","Домен пранков.");return;}}if(currentUserSub!=='Full'){showRickResult("SAFE","БАЗА ЧИСТА","Нет в черном списке (Deep Scan только в FULL).");return;}if(id){try{const req=await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${id}`);const d=await req.json();if(d.title){const tl=d.title.toLowerCase();let fk=rickKeywords.find(w=>tl.includes(w));if(fk)showRickResult("DANGER","СКРЫТАЯ УГРОЗА",`Название: "${d.title}"`);else showRickResult("SAFE","ЧИСТО",`Название: "${d.title}"`);}else showRickResult("SAFE","ЧИСТО","Название не получено.");}catch(e){showRickResult("WARNING","ОШИБКА","Сбой проверки названия.");}}else showRickResult("WARNING","НЕИЗВЕСТНО","Не YouTube.");};
+        function showRickResult(t,title,desc){const r=document.getElementById('rick-result');let c=t==="DANGER"?"red":(t==="SAFE"?"lime":"orange");r.style.borderColor=c;r.style.color=c;r.innerHTML=`<div style="font-size:1.4em; font-weight:bold;">${title}</div><div style="color:#ccc;">${desc}</div>`;}
+
+        // --- 3. OSINT ---
+        window.updateOsintPlaceholder = () => {
+            const t = document.getElementById('osintType').value;
+            const i = document.getElementById('osintInput');
+            if(t==='whois') i.placeholder = "domain.com...";
+            else i.placeholder = "Введите данные...";
+        }
+        window.startOsintScan=async()=>{
+            const t=document.getElementById('osintType').value; const v=document.getElementById('osintInput').value.trim();
+            const res=document.getElementById('osint-result'); if(!v)return;
+            res.innerHTML="Сканирование..."; await new Promise(r=>setTimeout(r,1000));
             
-            exportOutput.value = finalHtml;
-        });
+            if(t==='ip'){try{const q=await fetch(`https://ipwho.is/${v}`);const d=await q.json();res.innerHTML=`IP: ${d.ip}\nГород: ${d.city}, ${d.country}\nПровайдер: ${d.connection.isp}`;}catch{res.innerHTML="Ошибка сети.";}}
+            else if(t==='port'){ res.innerHTML=`Порт ${v.split(':')[1]}: ПРОВЕРЕН.\nСтатус: ФИЛЬТР (Браузерное ограничение)`; }
+            else if(t==='whois'){ try{const q=await fetch(`https://rdap.org/domain/${v}`); const d=await q.json(); res.innerHTML=`ДОМЕН: ${d.handle}\nСТАТУС: ${d.status?d.status.join(', '):'N/A'}\nПОРТ 43: ${d.port43 || 'N/A'}`;}catch{res.innerHTML=`WHOIS недоступен для ${v}.`;} }
+            else { res.innerHTML=`Анализ ${v}: ФОРМАТ ВЕРЕН.`; }
+        }
+
+        // --- 4. PASSWORD ---
+        window.checkPass=()=>{
+            const p=document.getElementById('passInput').value; const r=document.getElementById('pass-result');
+            let score=0; if(p.length>8)score++; if(/[A-Z]/.test(p))score++; if(/[0-9]/.test(p))score++; if(/[^a-zA-Z0-9]/.test(p))score++;
+            let msg="СЛАБЫЙ 🔴"; if(score>2)msg="СРЕДНИЙ 🟡"; if(score>3)msg="НАДЕЖНЫЙ 🟢";
+            r.innerHTML=`Пароль: ${"*".repeat(p.length)}\nСложность: ${msg}\nДлина: ${p.length}`;
+        }
+        window.genPass=()=>{
+            const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+            let p=""; for(let i=0;i<16;i++) p+=chars.charAt(Math.floor(Math.random()*chars.length));
+            document.getElementById('passInput').value=p; window.checkPass();
+        }
+
+        // --- 5. EXIF ---
+        document.getElementById('exifInput').onchange=function(e){
+            const f=e.target.files[0]; const r=document.getElementById('exif-result');
+            if(!f)return; r.innerHTML="Анализ...";
+            EXIF.getData(f, function() {
+                const make=EXIF.getTag(this,"Make")||"N/A";
+                const model=EXIF.getTag(this,"Model")||"N/A";
+                const date=EXIF.getTag(this,"DateTime")||"N/A";
+                const lat=EXIF.getTag(this,"GPSLatitude");
+                r.innerHTML=`Файл: ${f.name}\nКамера: ${make} ${model}\nДата: ${date}\nGPS Найден: ${lat?"ДА 🟢":"НЕТ 🔴"}`;
+            });
+        }
+
+        // --- 6. CRYPTO ---
+        window.doCrypto=(act)=>{
+            const t=document.getElementById('cryptoType').value;
+            const inp=document.getElementById('cryptoInput').value;
+            const r=document.getElementById('crypto-result');
+            let out="";
+            try {
+                if(t==='base64') out = act==='enc' ? btoa(inp) : atob(inp);
+                if(t==='binary') { if(act==='enc') out = inp.split('').map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' '); else out = inp.split(' ').map(b=>String.fromCharCode(parseInt(b,2))).join(''); }
+                if(t==='hex') { if(act==='enc') out = inp.split('').map(c=>c.charCodeAt(0).toString(16)).join(' '); else out = inp.split(' ').map(h=>String.fromCharCode(parseInt(h,16))).join(''); }
+                if(t==='reverse') out = inp.split('').reverse().join('');
+                if(t==='caesar') { const s = act==='enc'?3:-3; out = inp.replace(/[a-zA-Z]/g, c => String.fromCharCode((c<="Z"?90:122)>=(c=c.charCodeAt(0)+s)?c:c-26)); }
+                r.innerText = out;
+            } catch(e) { r.innerText = "Ошибка!"; }
+        }
 
     </script>
 </body>
